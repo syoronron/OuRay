@@ -29,6 +29,31 @@ create table public.companies (
 );
 
 -- ---------------------------------------------------------------------
+-- 品目（荷主が選ぶ。運送会社は便ごとに受け入れる品目を選ぶ）
+-- hygiene   : 衛生上の扱いが必要（汚れたリネンなど）。密閉容器・他の荷物と分ける
+-- is_waste  : 廃棄物。運ぶには廃棄物の収集運搬業の許可が必要なので、
+--             MVP では予約できない（許可を持つ運送会社への対応は将来）
+-- ---------------------------------------------------------------------
+create table public.cargo_categories (
+  code         text primary key check (code ~ '^[a-z][a-z0-9_]{1,40}$'),
+  name         text not null,
+  hygiene      boolean not null default false,
+  is_waste     boolean not null default false,
+  needs_sealed boolean not null default false,
+  sort_order   integer not null default 0
+);
+
+insert into public.cargo_categories (code, name, hygiene, is_waste, needs_sealed, sort_order) values
+  ('auto_parts',           '自動車部品',                         false, false, false, 10),
+  ('returnable_container', '通い箱・空き容器の返却',             false, false, false, 20),
+  ('general',              '一般の荷物（段ボール・パレット）',   false, false, false, 30),
+  ('linen_clean',          'リネン（洗濯済みのシーツ・タオル等）', false, false, false, 40),
+  ('linen_soiled',         'リネン（使用済みのシーツ・タオル等）', true,  false, true,  50),
+  ('care_supplies',        '介護用品（未使用の紙おむつ等）',     false, false, false, 60),
+  ('diaper_used',          '使用済みの紙おむつ（廃棄物）',       true,  true,  true,  70)
+on conflict (code) do nothing;
+
+-- ---------------------------------------------------------------------
 -- エリア（荷主が検索するときの単位。例：愛知、東京23区）
 -- ---------------------------------------------------------------------
 create table public.areas (
@@ -113,6 +138,11 @@ create table public.routes (
   booking_cutoff_hours integer not null default 24 check (booking_cutoff_hours between 0 and 336),
   -- true: 運送会社が承認してから確定 / false: 即時確定
   requires_approval    boolean not null default true,
+  -- 受け入れる品目（cargo_categories.code）。衛生物を受けるかは運送会社が決める
+  accepted_categories  text[] not null default array['auto_parts','returnable_container','general'],
+  -- 拠点以外での集荷・配達（寄り道）を受けるか。0 なら拠点のみ
+  detour_max_km        integer not null default 0 check (detour_max_km between 0 and 100),
+  detour_fee           integer not null default 0 check (detour_fee >= 0),  -- 寄り道1か所の料金（円・税抜）
   active_from          date not null default current_date,
   active_until         date,
   created_at           timestamptz not null default now(),
@@ -140,6 +170,9 @@ create table public.trips (
   price_per_pallet     integer not null check (price_per_pallet >= 0),
   booking_cutoff_at    timestamptz not null,
   requires_approval    boolean not null default true,
+  accepted_categories  text[] not null default array['auto_parts','returnable_container','general'],
+  detour_max_km        integer not null default 0 check (detour_max_km between 0 and 100),
+  detour_fee           integer not null default 0 check (detour_fee >= 0),
   status               text not null default 'draft'
                          check (status in ('draft', 'published', 'closed',
                                            'departed', 'completed', 'cancelled')),
@@ -152,6 +185,31 @@ create table public.trips (
 );
 create index on public.trips (status, depart_at);
 create index on public.trips (company_id, depart_at);
+
+-- ---------------------------------------------------------------------
+-- 定期予約（例：毎週火曜の帰り便に、リネン2枠を毎回予約）
+-- 定期ルートから便を作るときに、あわせて予約（申込中）を作る。
+-- 空きが足りない回は作らずに、荷主と運送会社に知らせる。
+-- ---------------------------------------------------------------------
+create table public.booking_series (
+  id                uuid primary key default gen_random_uuid(),
+  route_id          uuid not null references public.routes (id) on delete cascade,
+  shipper_id        uuid not null references public.companies (id) on delete restrict,
+  cargo_category    text not null references public.cargo_categories (code),
+  packaging         text not null check (packaging in ('pallet', 'carton', 'cart', 'other')),
+  pieces            integer not null check (pieces > 0),
+  pallets           integer not null check (pallets > 0),
+  weight_kg         integer not null check (weight_kg > 0),
+  pickup_address    text,
+  dropoff_address   text,
+  active_from       date not null,
+  active_until      date,
+  status            text not null default 'requested'
+                      check (status in ('requested', 'active', 'paused', 'ended')),
+  created_at        timestamptz not null default now(),
+  check (active_until is null or active_from <= active_until)
+);
+create index on public.booking_series (route_id);
 
 -- ---------------------------------------------------------------------
 -- 予約（荷主がパレット枠を押さえる。1便に複数件）
@@ -171,12 +229,17 @@ create table public.bookings (
                       check (status in ('requested', 'confirmed', 'rejected', 'cancelled',
                                         'trip_cancelled', 'loaded', 'in_transit', 'delivered')),
   -- 荷物
-  cargo_category    text not null,                  -- 品目（選択式）
+  series_id         uuid references public.booking_series (id) on delete set null,
+  cargo_category    text not null references public.cargo_categories (code),
   cargo_description text,
-  packaging         text not null check (packaging in ('pallet', 'carton', 'other')),
+  packaging         text not null check (packaging in ('pallet', 'carton', 'cart', 'other')),  -- cart=カゴ台車
   pieces            integer not null check (pieces > 0),
   pallets           integer not null check (pallets > 0),
   weight_kg         integer not null check (weight_kg > 0),
+  -- 拠点以外での集荷・配達（寄り道）。NULL なら拠点で受け渡し
+  pickup_address    text,
+  dropoff_address   text,
+  detour_amount     integer not null default 0 check (detour_amount >= 0),
   -- 当日の連絡先（持ち込み・受け取りの担当者）
   pickup_contact    text not null,
   pickup_phone      text not null,
@@ -226,7 +289,9 @@ create index on public.booking_events (booking_id, created_at);
 -- ログイン機能（P5）を作るときに、必要なポリシーを追加する。
 -- ---------------------------------------------------------------------
 alter table public.companies      enable row level security;
+alter table public.cargo_categories enable row level security;
 alter table public.areas          enable row level security;
+alter table public.booking_series enable row level security;
 alter table public.depots         enable row level security;
 alter table public.vehicles       enable row level security;
 alter table public.routes         enable row level security;
@@ -244,6 +309,9 @@ alter table public.booking_events enable row level security;
 --   trip_unavailable     公開中の便ではない／白ナンバーの車両
 --   trip_closed          締切を過ぎている
 --   no_capacity          パレット枠または重量が足りない
+--   category_waste       廃棄物（収集運搬業の許可が必要なため受け付けない）
+--   category_not_accepted この便では受け入れていない品目
+--   detour_not_available この便は寄り道での集荷・配達をしない
 -- =====================================================================
 create or replace function public.create_booking(
   p_trip_id           uuid,
@@ -259,7 +327,9 @@ create or replace function public.create_booking(
   p_dropoff_contact   text,
   p_dropoff_phone     text,
   p_fee_rate_bp       integer,
-  p_terms_version     text
+  p_terms_version     text,
+  p_pickup_address    text default null,
+  p_dropoff_address   text default null
 ) returns table (booking_id uuid, access_token text, status text, freight_amount integer)
 language plpgsql
 security invoker
@@ -274,6 +344,9 @@ declare
   v_freight     integer;
   v_fee         integer;
   v_status      text;
+  v_cat         cargo_categories%rowtype;
+  v_detours     integer;
+  v_detour_amt  integer;
   v_id          uuid;
   v_token       text;
 begin
@@ -297,6 +370,24 @@ begin
     raise exception 'trip_closed';
   end if;
 
+  select * into v_cat from cargo_categories c where c.code = p_cargo_category;
+  if not found then
+    raise exception 'category_not_accepted';
+  end if;
+  if v_cat.is_waste then
+    raise exception 'category_waste';
+  end if;
+  if not (p_cargo_category = any (v_trip.accepted_categories)) then
+    raise exception 'category_not_accepted';
+  end if;
+
+  v_detours := (case when nullif(trim(p_pickup_address), '')  is not null then 1 else 0 end)
+             + (case when nullif(trim(p_dropoff_address), '') is not null then 1 else 0 end);
+  if v_detours > 0 and v_trip.detour_max_km = 0 then
+    raise exception 'detour_not_available';
+  end if;
+  v_detour_amt := v_detours * v_trip.detour_fee;
+
   select coalesce(sum(b.pallets), 0), coalesce(sum(b.weight_kg), 0)
     into v_used_pal, v_used_kg
   from bookings b
@@ -307,7 +398,7 @@ begin
     raise exception 'no_capacity';
   end if;
 
-  v_freight := v_trip.price_per_pallet * p_pallets;
+  v_freight := v_trip.price_per_pallet * p_pallets + v_detour_amt;
   v_fee     := (v_freight * p_fee_rate_bp) / 10000;
   v_status  := case when v_trip.requires_approval then 'requested' else 'confirmed' end;
 
@@ -315,12 +406,14 @@ begin
     trip_id, shipper_id, status,
     cargo_category, cargo_description, packaging, pieces, pallets, weight_kg,
     pickup_contact, pickup_phone, dropoff_contact, dropoff_phone,
+    pickup_address, dropoff_address, detour_amount,
     unit_price, freight_amount, fee_rate_bp, fee_amount, terms_version
   ) values (
     p_trip_id, p_shipper_id, v_status,
     trim(p_cargo_category), nullif(trim(p_cargo_description), ''), p_packaging,
     p_pieces, p_pallets, p_weight_kg,
     trim(p_pickup_contact), trim(p_pickup_phone), trim(p_dropoff_contact), trim(p_dropoff_phone),
+    nullif(trim(p_pickup_address), ''), nullif(trim(p_dropoff_address), ''), v_detour_amt,
     v_trip.price_per_pallet, v_freight, p_fee_rate_bp, v_fee, p_terms_version
   )
   returning id, bookings.access_token into v_id, v_token;
