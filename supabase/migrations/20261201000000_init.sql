@@ -1,14 +1,14 @@
 -- =====================================================================
 -- OuRay 初期スキーマ（下書き）
 -- Supabase の「SQL Editor」にこのファイルの中身を貼り付けて実行します。
--- ※ ヒアリング（docs/open-questions.md）の結果を反映してから実行してください。
+-- 何回実行しても大丈夫です（すでにあるテーブル・索引はそのまま、関数は最新に置き換え）。
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
 -- 会社（運送会社・荷主）
 -- 1つの会社が両方を兼ねることもある
 -- ---------------------------------------------------------------------
-create table public.companies (
+create table if not exists public.companies (
   id                 uuid primary key default gen_random_uuid(),
   name               text not null check (length(trim(name)) > 0),
   is_carrier         boolean not null default false,  -- 運送会社として便を出す
@@ -34,7 +34,7 @@ create table public.companies (
 -- is_waste  : 廃棄物。運ぶには廃棄物の収集運搬業の許可が必要なので、
 --             MVP では予約できない（許可を持つ運送会社への対応は将来）
 -- ---------------------------------------------------------------------
-create table public.cargo_categories (
+create table if not exists public.cargo_categories (
   code         text primary key check (code ~ '^[a-z][a-z0-9_]{1,40}$'),
   name         text not null,
   hygiene      boolean not null default false,
@@ -56,7 +56,7 @@ on conflict (code) do nothing;
 -- ---------------------------------------------------------------------
 -- エリア（荷主が検索するときの単位。例：愛知、東京23区）
 -- ---------------------------------------------------------------------
-create table public.areas (
+create table if not exists public.areas (
   id         uuid primary key default gen_random_uuid(),
   name       text not null unique,
   sort_order integer not null default 0
@@ -65,7 +65,7 @@ create table public.areas (
 -- ---------------------------------------------------------------------
 -- 拠点（荷物の持ち込み・受け取り場所）
 -- ---------------------------------------------------------------------
-create table public.depots (
+create table if not exists public.depots (
   id            uuid primary key default gen_random_uuid(),
   company_id    uuid not null references public.companies (id) on delete cascade,
   area_id       uuid not null references public.areas (id),
@@ -80,14 +80,14 @@ create table public.depots (
   created_at    timestamptz not null default now(),
   unique (company_id, name)
 );
-create index on public.depots (area_id);
+create index if not exists depots_area_id_idx on public.depots (area_id);
 
 -- ---------------------------------------------------------------------
 -- 車両
 -- plate_kind: green=緑ナンバー（事業用） / white=白ナンバー（自家用）
 -- 白ナンバーの車両の便は公開できない（create_booking で確認）
 -- ---------------------------------------------------------------------
-create table public.vehicles (
+create table if not exists public.vehicles (
   id               uuid primary key default gen_random_uuid(),
   company_id       uuid not null references public.companies (id) on delete cascade,
   name             text not null,                 -- 呼び名（例：4t ウイング 1号車）
@@ -112,7 +112,7 @@ create table public.vehicles (
 -- 例：毎週火・金 14:00 名古屋センター発 → 翌6:00 東京〇〇店着
 -- weekdays: 0=日曜 … 6=土曜
 -- ---------------------------------------------------------------------
-create table public.routes (
+create table if not exists public.routes (
   id                   uuid primary key default gen_random_uuid(),
   company_id           uuid not null references public.companies (id) on delete cascade,
   vehicle_id           uuid not null references public.vehicles (id),
@@ -149,14 +149,14 @@ create table public.routes (
   check (origin_depot_id <> dest_depot_id),
   check (active_until is null or active_from <= active_until)
 );
-create index on public.routes (company_id);
+create index if not exists routes_company_id_idx on public.routes (company_id);
 
 -- ---------------------------------------------------------------------
 -- 便（日時が決まった1回分の運行）
 -- 定期ルートから自動生成（route_id あり）、または単発で登録（route_id なし）
 -- ルートの値は便に写して持つ（便ごとに空き・料金を調整できるように）
 -- ---------------------------------------------------------------------
-create table public.trips (
+create table if not exists public.trips (
   id                   uuid primary key default gen_random_uuid(),
   company_id           uuid not null references public.companies (id) on delete cascade,
   route_id             uuid references public.routes (id) on delete set null,
@@ -183,15 +183,15 @@ create table public.trips (
   -- 同じ定期ルートから同じ日時の便が2つできないようにする
   unique (route_id, depart_at)
 );
-create index on public.trips (status, depart_at);
-create index on public.trips (company_id, depart_at);
+create index if not exists trips_status_depart_at_idx on public.trips (status, depart_at);
+create index if not exists trips_company_id_depart_at_idx on public.trips (company_id, depart_at);
 
 -- ---------------------------------------------------------------------
 -- 定期予約（例：毎週火曜の帰り便に、リネン2枠を毎回予約）
 -- 定期ルートから便を作るときに、あわせて予約（申込中）を作る。
 -- 空きが足りない回は作らずに、荷主と運送会社に知らせる。
 -- ---------------------------------------------------------------------
-create table public.booking_series (
+create table if not exists public.booking_series (
   id                uuid primary key default gen_random_uuid(),
   route_id          uuid not null references public.routes (id) on delete cascade,
   shipper_id        uuid not null references public.companies (id) on delete restrict,
@@ -209,7 +209,7 @@ create table public.booking_series (
   created_at        timestamptz not null default now(),
   check (active_until is null or active_from <= active_until)
 );
-create index on public.booking_series (route_id);
+create index if not exists booking_series_route_id_idx on public.booking_series (route_id);
 
 -- ---------------------------------------------------------------------
 -- 予約（荷主がパレット枠を押さえる。1便に複数件）
@@ -218,7 +218,7 @@ create index on public.booking_series (route_id);
 --   fee_amount    ＝OuRay の手数料（OuRay が運送会社に請求）
 -- 単価・手数料率は予約時の値を写して保存する（あとで料金を変えても分かるように）
 -- ---------------------------------------------------------------------
-create table public.bookings (
+create table if not exists public.bookings (
   id                uuid primary key default gen_random_uuid(),
   trip_id           uuid not null references public.trips (id) on delete restrict,
   shipper_id        uuid not null references public.companies (id) on delete restrict,
@@ -255,8 +255,8 @@ create table public.bookings (
   decided_at        timestamptz,                    -- 承認・お断りした日時
   cancelled_at      timestamptz
 );
-create index on public.bookings (trip_id);
-create index on public.bookings (shipper_id, created_at desc);
+create index if not exists bookings_trip_id_idx on public.bookings (trip_id);
+create index if not exists bookings_shipper_id_created_at_idx on public.bookings (shipper_id, created_at desc);
 
 -- 「枠を使っている」予約の状態
 create or replace function public.booking_holds_capacity(p_status text)
@@ -267,7 +267,7 @@ $$;
 -- ---------------------------------------------------------------------
 -- 状態の記録（積込・到着・遅れ・事故など。荷主のページに時系列で表示）
 -- ---------------------------------------------------------------------
-create table public.booking_events (
+create table if not exists public.booking_events (
   id          uuid primary key default gen_random_uuid(),
   booking_id  uuid not null references public.bookings (id) on delete cascade,
   kind        text not null
@@ -279,7 +279,7 @@ create table public.booking_events (
   created_by  text not null check (created_by in ('carrier', 'shipper', 'admin', 'system')),
   created_at  timestamptz not null default now()
 );
-create index on public.booking_events (booking_id, created_at);
+create index if not exists booking_events_booking_id_created_at_idx on public.booking_events (booking_id, created_at);
 
 -- ---------------------------------------------------------------------
 -- セキュリティ（RLS）
