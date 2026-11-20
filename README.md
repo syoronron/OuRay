@@ -9,8 +9,8 @@
 - 行きは同業とシェアリングして自動車部品で満載、**帰りは空荷**
 - 将来は **トヨタモビリティ以外の運送会社も空きを出せる** ようにして、空きのあるトラックが集まる場所にする
 
-> いまは **組み立ての準備段階** です。必要な機能の細分化・データ設計・確認事項をまとめています。
-> 画面のコードはまだありません（P0 から作ります）。
+> いまは **P0（初期設定）** まで。トップページとデータベースの準備ができています。
+> 次は P1（運送会社が便を作って公開する）です。
 
 ## どんな荷物に向いているか
 
@@ -79,7 +79,7 @@ OuRay の便は **日時と場所が決まっていて、速くはないが、�
 
 | フェーズ | 内容 | 状態 |
 |---|---|---|
-| P0 | 初期設定・テーブル作成・公開 | |
+| P0 | 初期設定・テーブル作成・公開 | ✅（Supabase・Vercel の設定は下の手順で） |
 | P1 | 運送会社：拠点・車両・定期ルートの登録 → 便の自動生成・空きの公開 | |
 | P2 | 荷主：便の検索・荷物の入力・予約・予約確認ページ | |
 | P3 | 運行当日：集荷・積込・輸送中・配達完了の記録（荷主ページに反映） | |
@@ -94,15 +94,71 @@ OuRay の便は **日時と場所が決まっていて、速くはないが、�
 データの設計は [`docs/data-model.md`](docs/data-model.md)、
 作る前に確認すべきこと（法律・ヒアリング）は [`docs/open-questions.md`](docs/open-questions.md) にあります。
 
-## フォルダ構成（予定）
+## フォルダ構成
 
 ```
 docs/                     機能一覧・データ設計・確認事項
-supabase/migrations/      データベースの設計図（テーブル定義）
-src/app/                  画面（P0 で作成）
+design/                   画面のスクリーンショット
+supabase/migrations/      データベースの設計図（テーブル定義・予約の受付処理）
+supabase/seed.sql         デモ用データ（架空の運送会社1社・荷主2社・定期ルート4本）
+src/app/                  画面（ページ）
+src/app/system-status.tsx データベースにつながっているかの表示
+src/lib/money.ts          金額の計算（DB の create_booking と同じ計算。テストあり）
+src/lib/supabase/         データベース接続
+```
+
+P1 以降で追加する予定：
+
+```
 src/app/carrier/          運送会社の管理画面
 src/app/search/           荷主の便検索
 src/app/b/[token]/        荷主の予約確認ページ（推測できないURL）
 src/lib/trips/generate.ts 定期ルートから便を作るロジック（テストを書く）
-src/lib/pricing.ts        料金計算（テストを書く）
 ```
+
+## セットアップ手順
+
+### 1. Supabase（データベース）を用意する
+
+1. https://supabase.com で無料アカウントを作り、「New project」でプロジェクトを作成します
+   - Region は **Northeast Asia (Tokyo)** を選びます
+   - Database Password は控えておきます（今回のアプリでは使いませんが、管理用に必要です）
+2. 左メニューの **SQL Editor** を開き、次のファイルを順番に貼り付けて「Run」を押します
+   1. `supabase/migrations/20261201000000_init.sql`（テーブル作成・予約の受付処理）
+   2. `supabase/seed.sql`（デモ用データ）
+
+   > `seed.sql` は何回実行しても大丈夫です。`init.sql` は最初の1回だけ実行します。
+3. **Project Settings** から次の2つを控えます
+   - **Data API → Project URL** … `SUPABASE_URL`
+   - **API Keys → Secret key**（`sb_secret_` で始まるもの）… `SUPABASE_SECRET_KEY`
+     （画面が古い場合は `service_role` キーでも動きます）
+
+> ⚠️ Secret key は「何でもできる鍵」です。GitHub やチャットに貼らないでください。
+
+### 2. 手元で動かす（任意）
+
+```bash
+cp .env.example .env.local   # 作成した .env.local に上の2つの値を書く
+npm install
+npm run dev                  # http://localhost:3000 を開く
+```
+
+トップページ下部の「SYSTEM」が **データベース接続OK** になれば成功です。
+
+```bash
+npm test                     # 金額の計算のテスト
+```
+
+### 3. Vercel で公開する
+
+1. https://vercel.com で GitHub アカウントを使って無料登録します
+2. 「Add New… → Project」で `OuRay` リポジトリを選んで Import します
+3. **Environment Variables** に `SUPABASE_URL` / `SUPABASE_SECRET_KEY` を追加します
+4. 「Deploy」を押すと公開URLが発行されます。トップページの「SYSTEM」が **データベース接続OK** になれば P0 完了です
+
+## セキュリティの方針
+
+- すべてのテーブルで RLS（行レベルセキュリティ）を有効にしています。ポリシーを作っていないため、ブラウザから直接データベースを読み書きすることはできません
+- データベースの操作は、すべてサーバー側（Secret key を持つ Next.js のサーバー処理）で行います
+- 予約の取りすぎは、データベースの関数 `create_booking()` の中で便をロックしてから確認して防ぎます
+- 廃棄物（使用済み紙おむつなど）の予約は、データベースの段階で必ず断ります

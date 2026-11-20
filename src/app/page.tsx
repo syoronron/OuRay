@@ -1,0 +1,90 @@
+import { Suspense } from "react";
+import { Logo } from "@/components/logo";
+import { SystemStatus } from "./system-status";
+
+/** 行き便は満載、帰り便は空き。空きに予約が入っていく様子を、パレット枠のマスで見せる */
+function TripGraphic() {
+  const slots = 8;
+  const booked = 3;
+  return (
+    <div className="w-full" aria-hidden>
+      <div>
+        <p className="num flex justify-between text-[11px] font-semibold tracking-[0.12em] text-gray">
+          <span>OUTBOUND　行き</span>
+          <span>FULL</span>
+        </p>
+        <div className="mt-1 grid grid-cols-8 gap-1">
+          {Array.from({ length: slots }, (_, i) => (
+            <span key={i} className="aspect-square border border-ink bg-ink" />
+          ))}
+        </div>
+      </div>
+      <div className="mt-5">
+        <p className="num flex justify-between text-[11px] font-semibold tracking-[0.12em] text-gray">
+          <span>RETURN　帰り</span>
+          <span>
+            {slots - booked} / {slots} EMPTY
+          </span>
+        </p>
+        <div className="mt-1 grid grid-cols-8 gap-1">
+          {Array.from({ length: slots }, (_, i) => (
+            <span key={i} className={`aspect-square border border-ink ${i < booked ? "bg-accent" : "stripe bg-white"}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SoonButton({ label, who }: { label: string; who: string }) {
+  return (
+    <div
+      aria-disabled
+      className="flex min-h-13 items-center justify-between border border-ink bg-white px-4 font-bold text-gray"
+    >
+      <span>
+        {label}
+        <span className="ml-2 text-xs font-medium">{who}</span>
+      </span>
+      <span className="text-[11px] font-medium">準備中</span>
+    </div>
+  );
+}
+
+/** トップページ：1枚のポスターのように、文字は最小限（Zicci と同じ考え方） */
+export default function Home() {
+  return (
+    <main className="mx-auto flex min-h-svh w-full max-w-md flex-col px-5 pt-4 pb-4">
+      <header className="flex items-center justify-between border-b border-ink pb-3">
+        <Logo size={22} />
+        <span className="num text-[10px] font-semibold tracking-[0.2em] text-gray">RETURN-TRIP SHARING</span>
+      </header>
+
+      <h1 className="mt-[4svh] text-[clamp(2rem,10vw,2.6rem)] leading-[1.18] font-bold tracking-tight">
+        帰りのトラック、
+        <br />
+        空いています。
+      </h1>
+
+      <div className="flex flex-1 items-center py-[4svh]">
+        <TripGraphic />
+      </div>
+
+      <p className="text-lg font-bold">決まった日時の便だから、安い。</p>
+      <p className="mt-1 text-sm leading-relaxed text-gray">
+        急がない・毎週出る荷物を、トラックの帰り便の空きで運びます。
+      </p>
+
+      <div className="mt-4 grid gap-2">
+        <SoonButton label="便をさがす" who="荷物を送りたい方" />
+        <SoonButton label="空きを出す" who="運送会社の方" />
+      </div>
+
+      <footer className="pt-4">
+        <Suspense fallback={<p className="text-[11px] text-gray">…</p>}>
+          <SystemStatus compact />
+        </Suspense>
+      </footer>
+    </main>
+  );
+}
