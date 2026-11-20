@@ -93,7 +93,8 @@ create table public.routes (
   vehicle_id           uuid not null references public.vehicles (id),
   origin_depot_id      uuid not null references public.depots (id),
   dest_depot_id        uuid not null references public.depots (id),
-  -- 行き便（自社の荷物で満載）か、帰り便（空きを売る）か
+  -- 行き便（同業とのシェアで満載。空きが出た日だけ売る）か、帰り便（空きを売る）か
+  -- 予約の仕組みはどちらも同じ。表示と積載率の集計に使う
   direction            text not null default 'return'
                          check (direction in ('outbound', 'return')),
   -- 組になる行き便（帰り便から行き便をたどれるように）
@@ -154,6 +155,9 @@ create index on public.trips (company_id, depart_at);
 
 -- ---------------------------------------------------------------------
 -- 予約（荷主がパレット枠を押さえる。1便に複数件）
+-- OuRay は仲介：運送の契約は「荷主 × 便の運送会社」。
+--   freight_amount＝運送会社の運賃（運送会社が荷主に請求）
+--   fee_amount    ＝OuRay の手数料（OuRay が運送会社に請求）
 -- 単価・手数料率は予約時の値を写して保存する（あとで料金を変えても分かるように）
 -- ---------------------------------------------------------------------
 create table public.bookings (
