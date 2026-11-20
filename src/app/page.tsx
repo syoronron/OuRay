@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/logo";
 import { SystemStatus } from "./system-status";
@@ -77,7 +78,18 @@ export default function Home() {
 
       <div className="mt-4 grid gap-2">
         <SoonButton label="便をさがす" who="荷物を送りたい方" />
-        <SoonButton label="空きを出す" who="運送会社の方" />
+        <Link
+          href="/carrier"
+          className="flex min-h-13 items-center justify-between border border-ink bg-ink px-4 font-bold text-white"
+        >
+          <span>
+            空きを出す
+            <span className="ml-2 text-xs font-medium">運送会社の方</span>
+          </span>
+          <span className="num" aria-hidden>
+            →
+          </span>
+        </Link>
       </div>
 
       <footer className="pt-4">
