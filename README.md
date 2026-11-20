@@ -127,7 +127,7 @@ src/lib/trips/generate.ts 定期ルートから便を作るロジック（テス
    1. `supabase/migrations/20261201000000_init.sql`（テーブル作成・予約の受付処理）
    2. `supabase/seed.sql`（デモ用データ）
 
-   > `seed.sql` は何回実行しても大丈夫です。`init.sql` は最初の1回だけ実行します。
+   > どちらも何回実行しても大丈夫です。
 3. **Project Settings** から次の2つを控えます
    - **Data API → Project URL** … `SUPABASE_URL`
    - **API Keys → Secret key**（`sb_secret_` で始まるもの）… `SUPABASE_SECRET_KEY`
