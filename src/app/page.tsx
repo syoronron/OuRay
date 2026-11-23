@@ -45,12 +45,12 @@ export default function Home() {
       {/* 背景：トラックの写真（トヨタモビリティへの提案用）。文字が読みやすいよう、上に薄い白の層を重ねる */}
       <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden>
         <Image
-          src="/images/top-truck.jpg"
+          src="/images/top-trucks.jpg"
           alt=""
           fill
           preload
           sizes="100vw"
-          className="object-cover object-[78%_center] md:object-center"
+          className="object-cover object-[34%_center] md:object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-paper/95 via-paper/55 to-paper/95" />
       </div>
