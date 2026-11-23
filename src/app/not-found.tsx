@@ -5,7 +5,9 @@ export default function NotFound() {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col px-5 pt-4 pb-8">
       <header className="border-b border-line pb-3">
-        <Logo size={22} />
+        <Link href="/" aria-label="トップページへ">
+          <Logo size={22} />
+        </Link>
       </header>
       <p className="num mt-12 text-[11px] font-semibold tracking-[0.2em] text-gray">404</p>
       <h1 className="mt-1 text-2xl font-bold">ページが見つかりません</h1>
