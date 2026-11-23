@@ -4,40 +4,6 @@ import { Suspense } from "react";
 import { Logo } from "@/components/logo";
 import { SystemStatus } from "./system-status";
 
-/** 行き便は満載、帰り便は空き。空きに予約が入っていく様子を、パレット枠のマスで見せる */
-function TripGraphic() {
-  const slots = 8;
-  const booked = 3;
-  return (
-    <div className="w-full" aria-hidden>
-      <div>
-        <p className="num flex justify-between text-[11px] font-semibold tracking-[0.12em] text-gray">
-          <span>OUTBOUND　行き</span>
-          <span>FULL</span>
-        </p>
-        <div className="mt-1 grid grid-cols-8 gap-1">
-          {Array.from({ length: slots }, (_, i) => (
-            <span key={i} className="aspect-square rounded-[10px] bg-navy" />
-          ))}
-        </div>
-      </div>
-      <div className="mt-5">
-        <p className="num flex justify-between text-[11px] font-semibold tracking-[0.12em] text-gray">
-          <span>RETURN　帰り</span>
-          <span>
-            {slots - booked} / {slots} EMPTY
-          </span>
-        </p>
-        <div className="mt-1 grid grid-cols-8 gap-1">
-          {Array.from({ length: slots }, (_, i) => (
-            <span key={i} className={`aspect-square rounded-[4px] border ${i < booked ? "border-primary bg-primary" : "stripe border-mist bg-white"}`} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /** トップページ：1枚のポスターのように、文字は最小限（Zicci と同じ考え方） */
 export default function Home() {
   return (
@@ -60,20 +26,24 @@ export default function Home() {
         <span className="num text-[10px] font-semibold tracking-[0.2em] text-gray">RETURN-TRIP SHARING</span>
       </header>
 
-      <h1 className="mt-[4svh] text-[clamp(2rem,10vw,2.75rem)] leading-[1.25] font-normal">
-        帰りのトラック、
-        <br />
-        空いています。
-      </h1>
-
-      <div className="flex flex-1 items-center py-[4svh]">
-        <TripGraphic />
+      {/* 全国の事業所の地図（トヨタモビリティへの提案用） */}
+      <div className="flex flex-1 flex-col justify-center py-[4svh]">
+        <Image
+          src="/images/top-network-map.jpg"
+          alt="全国に広がるトヨタ輸送の事業所の地図"
+          width={1200}
+          height={679}
+          preload
+          sizes="(max-width: 448px) 100vw, 408px"
+          className="w-full rounded-2xl shadow-[0_8px_24px_rgba(3,59,125,0.18)]"
+        />
+        <h1 className="mt-6 text-[clamp(1.75rem,8vw,2.4rem)] leading-[1.3] font-bold text-navy">
+          トヨタ初の
+          <br />
+          物流シェアリング
+        </h1>
+        <p className="mt-2 text-lg leading-relaxed">トヨタの交通網で輸送を安価に</p>
       </div>
-
-      <p className="text-lg font-bold">決まった日時の便だから、安い。</p>
-      <p className="mt-1 text-sm leading-relaxed text-gray">
-        急がない・毎週出る荷物を、トラックの帰り便の空きで運びます。
-      </p>
 
       <div className="mt-4 grid gap-2">
         <Link
@@ -81,8 +51,8 @@ export default function Home() {
           className="flex min-h-14 items-center justify-between rounded-[10px] bg-primary px-5 font-bold text-white"
         >
           <span>
-            便をさがす
-            <span className="ml-2 text-xs font-medium">荷物を送りたい方</span>
+            お見積りはこちらから
+            <span className="ml-2 text-xs font-medium">便をさがす</span>
           </span>
           <span className="num" aria-hidden>
             →
