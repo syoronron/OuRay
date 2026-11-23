@@ -4,6 +4,7 @@ import { ActionForm, SubmitButton } from "@/components/action-form";
 import { PageHeader, Section, SetupNotice } from "@/components/page-header";
 import { requireAdminPage } from "@/lib/auth";
 import {
+  currentCarrierId,
   getCarrier,
   getTrip,
   isDatabaseConfigured,
@@ -26,19 +27,21 @@ export default async function TripPage({ params }: PageProps<"/carrier/trips/[id
   const { id } = await params;
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
-  if (!carrier) return <MissingCarrier />;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
-  const trip = await getTrip(carrier.id, id);
-  if (!trip) notFound();
-  const [depots, vehicles, routes, categories, { bookings, shippers }] = await Promise.all([
-    listDepots(carrier.id),
-    listVehicles(carrier.id),
-    listRoutes(carrier.id),
+  // 便の ID も会社の ID も先に分かるので、すべて同時に読み込む
+  const carrierId = currentCarrierId();
+  const [carrier, trip, depots, vehicles, routes, categories, { bookings, shippers }] = await Promise.all([
+    getCarrier(),
+    getTrip(carrierId, id),
+    listDepots(carrierId),
+    listVehicles(carrierId),
+    listRoutes(carrierId),
     listCategories(),
-    listCarrierBookings([trip.id]),
+    listCarrierBookings({ companyId: carrierId, tripId: id }),
   ]);
+  if (!carrier) return <MissingCarrier />;
+  if (!trip) notFound();
   const depot = (depotId: string) => depots.find((d) => d.id === depotId)?.name ?? "—";
   const vehicle = vehicles.find((v) => v.id === trip.vehicle_id);
   const route = routes.find((r) => r.id === trip.route_id);

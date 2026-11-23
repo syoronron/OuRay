@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { PageHeader, Section, SetupNotice } from "@/components/page-header";
 import { requireAdminPage } from "@/lib/auth";
-import { getCarrier, isDatabaseConfigured, listCategories, listDepots, listVehicles } from "@/lib/data/carrier";
+import { currentCarrierId,
+  getCarrier, isDatabaseConfigured, listCategories, listDepots, listVehicles } from "@/lib/data/carrier";
 import { addDays, todayJst } from "@/lib/time";
 import { addTrip } from "../../actions";
 import { MissingCarrier, NeedFleet } from "../../notices";
@@ -12,13 +13,14 @@ import { Field, TripFields } from "../../trip-fields";
 export default async function NewTripPage() {
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
-  if (!carrier) return <MissingCarrier />;
-  const [vehicles, depots, categories] = await Promise.all([
-    listVehicles(carrier.id),
-    listDepots(carrier.id),
+  const carrierId = currentCarrierId();
+  const [carrier, vehicles, depots, categories] = await Promise.all([
+    getCarrier(),
+    listVehicles(carrierId),
+    listDepots(carrierId),
     listCategories(),
   ]);
+  if (!carrier) return <MissingCarrier />;
   // 締切（初期値24時間前）に間に合うよう、初期値は明後日
   const defaultDate = addDays(todayJst(), 2);
 

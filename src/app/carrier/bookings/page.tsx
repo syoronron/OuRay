@@ -5,6 +5,7 @@ import { requireAdminPage } from "@/lib/auth";
 import { BOOKING_STATUSES, PACKAGING } from "@/lib/booking";
 import { listCarrierBookings, type Booking, type Shipper } from "@/lib/data/bookings";
 import {
+  currentCarrierId,
   getCarrier,
   isDatabaseConfigured,
   listCategories,
@@ -24,17 +25,19 @@ import { MissingCarrier } from "../notices";
 export default async function BookingsPage() {
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
-  if (!carrier) return <MissingCarrier />;
+  const carrierId = currentCarrierId();
 
   const today = todayJst();
-  const [trips, routes, depots, categories] = await Promise.all([
-    listTrips(carrier.id, jstToDate(addDays(today, -14), 0), jstToDate(addDays(today, 60), 0)),
-    listRoutes(carrier.id),
-    listDepots(carrier.id),
+  const [carrier, trips, { bookings, shippers }, routes, depots, categories] = await Promise.all([
+    getCarrier(),
+    listTrips(carrierId, jstToDate(addDays(today, -14), 0), jstToDate(addDays(today, 60), 0)),
+    listCarrierBookings({ companyId: carrierId, from: jstToDate(addDays(today, -14), 0), to: jstToDate(addDays(today, 60), 0) }),
+    listRoutes(carrierId),
+    listDepots(carrierId),
     listCategories(),
   ]);
-  const { bookings, shippers } = await listCarrierBookings(trips.map((t) => t.id));
+  if (!carrier) return <MissingCarrier />;
+
   const tripById = new Map(trips.map((t) => [t.id, t]));
   const routeNumber = new Map(routes.map((r) => [r.id, r.number]));
   const depotName = new Map(depots.map((d) => [d.id, d.name]));

@@ -4,6 +4,7 @@ import { ActionForm, SubmitButton } from "@/components/action-form";
 import { PageHeader, Section, SetupNotice } from "@/components/page-header";
 import { requireAdminPage } from "@/lib/auth";
 import {
+  currentCarrierId,
   getCarrier,
   getRoute,
   isDatabaseConfigured,
@@ -23,18 +24,19 @@ export default async function RoutePage({ params }: PageProps<"/carrier/routes/[
   const { id } = await params;
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
-  if (!carrier) return <MissingCarrier />;
+  const carrierId = currentCarrierId();
 
   const isNew = id === "new";
   if (!isNew && !/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const [route, routes, vehicles, depots, categories] = await Promise.all([
-    isNew ? null : getRoute(carrier.id, id),
-    listRoutes(carrier.id),
-    listVehicles(carrier.id),
-    listDepots(carrier.id),
+  const [carrier, route, routes, vehicles, depots, categories] = await Promise.all([
+    getCarrier(),
+    isNew ? null : getRoute(carrierId, id),
+    listRoutes(carrierId),
+    listVehicles(carrierId),
+    listDepots(carrierId),
     listCategories(),
   ]);
+  if (!carrier) return <MissingCarrier />;
   if (!isNew && !route) notFound();
   const depotName = new Map(depots.map((d) => [d.id, d.name]));
   const others = routes.filter((r) => r.id !== id);

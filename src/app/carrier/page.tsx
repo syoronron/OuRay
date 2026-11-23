@@ -3,7 +3,8 @@ import { ActionForm, SubmitButton } from "@/components/action-form";
 import { PageHeader, Section, SetupNotice } from "@/components/page-header";
 import { WeekNav } from "@/components/week-nav";
 import { requireAdminPage } from "@/lib/auth";
-import { getCarrier, isDatabaseConfigured, listDepots, listRoutes, listTrips } from "@/lib/data/carrier";
+import { currentCarrierId,
+  getCarrier, isDatabaseConfigured, listDepots, listRoutes, listTrips } from "@/lib/data/carrier";
 import { DIRECTIONS } from "@/lib/labels";
 import { addDays, formatDateShort, formatDuration, formatTime, jstToDate, todayJst, toJst } from "@/lib/time";
 import { GENERATE_DAYS } from "@/lib/trips/generate";
@@ -18,17 +19,18 @@ export default async function TripsPage({ searchParams }: PageProps<"/carrier">)
   const { week: weekParam } = await searchParams;
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
-  if (!carrier) return <MissingCarrier />;
+  const carrierId = currentCarrierId();
 
   const week = resolveWeek(weekParam);
-  const [trips, routes, depots, upcoming] = await Promise.all([
-    listTrips(carrier.id, jstToDate(week.from, 0), jstToDate(addDays(week.to, 1), 0)),
-    listRoutes(carrier.id),
-    listDepots(carrier.id),
+  const [carrier, trips, routes, depots, upcoming] = await Promise.all([
+    getCarrier(),
+    listTrips(carrierId, jstToDate(week.from, 0), jstToDate(addDays(week.to, 1), 0)),
+    listRoutes(carrierId),
+    listDepots(carrierId),
     // 承認待ちの申込は、表示中の週にかかわらず数える
-    listTrips(carrier.id, new Date(), jstToDate(addDays(todayJst(), 60), 0)),
+    listTrips(carrierId, new Date(), jstToDate(addDays(todayJst(), 60), 0)),
   ]);
+  if (!carrier) return <MissingCarrier />;
   const waiting = upcoming.reduce((s, t) => s + t.requested_count, 0);
   const depotName = new Map(depots.map((d) => [d.id, d.name]));
   const routeById = new Map(routes.map((r) => [r.id, r]));

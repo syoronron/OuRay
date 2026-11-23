@@ -58,53 +58,51 @@ function fail(what: string, error: { message: string }): never {
   throw new Error(`${what}の読み込みに失敗しました: ${error.message}`);
 }
 
-/** 荷主の予約確認ページ用：予約・記録・荷主 */
-export async function getBookingByToken(
-  token: string,
-): Promise<{ booking: Booking; events: BookingEvent[]; shipper: Shipper } | null> {
+/** 荷主の予約確認ページ用：予約と記録（記録は予約の中に入れて1回で読む） */
+export async function getBookingByToken(token: string): Promise<{ booking: Booking; events: BookingEvent[] } | null> {
   if (!/^[0-9a-f]{64}$/.test(token)) return null;
-  const { data, error } = await db().from("bookings").select(BOOKING_COLUMNS).eq("access_token", token).maybeSingle();
+  const { data, error } = await db()
+    .from("bookings")
+    .select(`${BOOKING_COLUMNS}, booking_events(kind, message, created_by, created_at)`)
+    .eq("access_token", token)
+    .maybeSingle();
   if (error) fail("予約", error);
   if (!data) return null;
-  const booking = data as Booking;
-  const [events, shipper] = await Promise.all([
-    db()
-      .from("booking_events")
-      .select("kind, message, created_by, created_at")
-      .eq("booking_id", booking.id)
-      .order("created_at"),
-    db().from("companies").select("id, name, contact_name, phone, email, status").eq("id", booking.shipper_id).single(),
-  ]);
-  if (events.error) fail("予約の記録", events.error);
-  if (shipper.error) fail("荷主", shipper.error);
-  return { booking, events: events.data as BookingEvent[], shipper: shipper.data as Shipper };
+  const { booking_events, ...booking } = data as unknown as Booking & { booking_events: BookingEvent[] | null };
+  const events = (booking_events ?? []).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  return { booking: booking as Booking, events };
 }
 
-/** 運送会社の画面用：自社の便の予約（便の出発が from 以降）と荷主 */
+export async function getShipper(id: string): Promise<Shipper | null> {
+  const { data, error } = await db()
+    .from("companies")
+    .select("id, name, contact_name, phone, email, status")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) fail("荷主", error);
+  return data as Shipper | null;
+}
+
+/**
+ * 運送会社の画面用：自社の便の予約と荷主。
+ * 便（期間 or 1便）の中に予約を入れて1回で読み、荷主は同時に読む（待ち時間を減らすため）。
+ * 荷主は今は全件を読む（数が少ないうちはこの方が速い。増えたら絞り込みに変える）。
+ */
 export async function listCarrierBookings(
-  tripIds: string[],
+  where: { companyId: string; from: Date; to: Date } | { companyId: string; tripId: string },
 ): Promise<{ bookings: Booking[]; shippers: Map<string, Shipper> }> {
-  if (tripIds.length === 0) return { bookings: [], shippers: new Map() };
-  const all: Booking[] = [];
-  // URL が長くなりすぎないよう、便を分けて読む
-  for (let i = 0; i < tripIds.length; i += 100) {
-    const { data, error } = await db()
-      .from("bookings")
-      .select(BOOKING_COLUMNS)
-      .in("trip_id", tripIds.slice(i, i + 100))
-      .order("created_at");
-    if (error) fail("予約", error);
-    all.push(...(data as Booking[]));
-  }
-  const shipperIds = [...new Set(all.map((b) => b.shipper_id))];
-  const shippers = new Map<string, Shipper>();
-  if (shipperIds.length > 0) {
-    const { data, error } = await db()
-      .from("companies")
-      .select("id, name, contact_name, phone, email, status")
-      .in("id", shipperIds);
-    if (error) fail("荷主", error);
-    for (const s of data as Shipper[]) shippers.set(s.id, s);
-  }
-  return { bookings: all, shippers };
+  let trips = db().from("trips").select(`id, bookings(${BOOKING_COLUMNS})`).eq("company_id", where.companyId);
+  trips = "tripId" in where
+    ? trips.eq("id", where.tripId)
+    : trips.gte("depart_at", where.from.toISOString()).lt("depart_at", where.to.toISOString());
+  const [tripRows, shipperRows] = await Promise.all([
+    trips,
+    db().from("companies").select("id, name, contact_name, phone, email, status").eq("is_shipper", true),
+  ]);
+  if (tripRows.error) fail("予約", tripRows.error);
+  if (shipperRows.error) fail("荷主", shipperRows.error);
+  const bookings = (tripRows.data as unknown as { bookings: Booking[] | null }[])
+    .flatMap((t) => t.bookings ?? [])
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  return { bookings, shippers: new Map((shipperRows.data as Shipper[]).map((x) => [x.id, x])) };
 }

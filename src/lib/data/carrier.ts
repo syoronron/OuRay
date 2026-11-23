@@ -124,6 +124,15 @@ export type CargoCategory = {
 
 // ---------- 読み込み ----------
 
+/**
+ * いま操作している運送会社の ID。
+ * ログイン（P5）ができるまではデモの運送会社。ID が先に分かるので、会社の読み込みを待たずに
+ * ほかのデータを同時に読み込める（画面が速くなる）。
+ */
+export function currentCarrierId(): string {
+  return DEMO_CARRIER_ID;
+}
+
 export async function getCarrier(): Promise<Carrier | null> {
   const { data, error } = await db()
     .from("companies")

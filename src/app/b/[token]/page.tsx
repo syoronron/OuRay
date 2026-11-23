@@ -6,7 +6,7 @@ import { ActionForm, SubmitButton } from "@/components/action-form";
 import { Section, SetupNotice } from "@/components/page-header";
 import { BOOKING_STATUSES, PACKAGING, STEPS, canCancel, stepIndex } from "@/lib/booking";
 import { loadBoardTrip } from "@/lib/data/board";
-import { getBookingByToken } from "@/lib/data/bookings";
+import { getBookingByToken, getShipper } from "@/lib/data/bookings";
 import { isDatabaseConfigured } from "@/lib/data/carrier";
 import { TAX_RATE_PERCENT, yen } from "@/lib/money";
 import { formatDateShort, formatDateTime, formatPhone, formatTime, toJst } from "@/lib/time";
@@ -39,8 +39,10 @@ export default async function MyBookingPage({ params, searchParams }: PageProps<
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const data = await getBookingByToken(token);
   if (!data) notFound();
-  const { booking, events, shipper } = data;
-  const tripData = await loadBoardTrip(booking.trip_id);
+  const { booking, events } = data;
+  // 荷主と便は、予約が分かれば同時に読める
+  const [shipper, tripData] = await Promise.all([getShipper(booking.shipper_id), loadBoardTrip(booking.trip_id)]);
+  if (!shipper) notFound();
   const trip = tripData?.trip;
   const carrier = trip ? tripData.carriers.get(trip.company_id) : undefined;
   const route = trip?.route_id ? tripData?.routes.get(trip.route_id) : undefined;

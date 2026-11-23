@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { PageHeader, SetupNotice } from "@/components/page-header";
 import { requireAdminPage } from "@/lib/auth";
-import { getCarrier, isDatabaseConfigured, listDepots, listRoutes, listVehicles, type Route } from "@/lib/data/carrier";
+import { currentCarrierId,
+  getCarrier, isDatabaseConfigured, listDepots, listRoutes, listVehicles, type Route } from "@/lib/data/carrier";
 import { DIRECTIONS } from "@/lib/labels";
 import { formatDuration, formatTime, weekdayLabel } from "@/lib/time";
 import { tripCode } from "@/lib/trips/board";
@@ -11,13 +12,14 @@ import { MissingCarrier, NeedFleet } from "../notices";
 export default async function RoutesPage() {
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
-  if (!carrier) return <MissingCarrier />;
-  const [routes, depots, vehicles] = await Promise.all([
-    listRoutes(carrier.id),
-    listDepots(carrier.id),
-    listVehicles(carrier.id),
+  const carrierId = currentCarrierId();
+  const [carrier, routes, depots, vehicles] = await Promise.all([
+    getCarrier(),
+    listRoutes(carrierId),
+    listDepots(carrierId),
+    listVehicles(carrierId),
   ]);
+  if (!carrier) return <MissingCarrier />;
   const depotName = new Map(depots.map((d) => [d.id, d.name]));
   const vehicleName = new Map(vehicles.map((v) => [v.id, v.name]));
 

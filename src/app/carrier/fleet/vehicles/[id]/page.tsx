@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { PageHeader, Section, SetupNotice } from "@/components/page-header";
 import { requireAdminPage } from "@/lib/auth";
-import { getCarrier, getVehicle, isDatabaseConfigured } from "@/lib/data/carrier";
+import { currentCarrierId, getCarrier, getVehicle, isDatabaseConfigured } from "@/lib/data/carrier";
 import { BODY_TYPES, PLATE_KINDS, TEMPERATURES } from "@/lib/labels";
 import { deleteVehicle, saveVehicle } from "../../../actions";
 import { MissingCarrier } from "../../../notices";
@@ -14,11 +14,10 @@ export default async function VehiclePage({ params }: PageProps<"/carrier/fleet/
   const { id } = await params;
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
-  if (!carrier) return <MissingCarrier />;
   const isNew = id === "new";
   if (!isNew && !/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const vehicle = isNew ? null : await getVehicle(carrier.id, id);
+  const [carrier, vehicle] = await Promise.all([getCarrier(), isNew ? null : getVehicle(currentCarrierId(), id)]);
+  if (!carrier) return <MissingCarrier />;
   if (!isNew && !vehicle) notFound();
 
   return (

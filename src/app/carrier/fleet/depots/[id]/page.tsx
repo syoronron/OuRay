@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { PageHeader, Section, SetupNotice } from "@/components/page-header";
 import { requireAdminPage } from "@/lib/auth";
-import { getCarrier, getDepot, isDatabaseConfigured, listAreas } from "@/lib/data/carrier";
+import { currentCarrierId,
+  getCarrier, getDepot, isDatabaseConfigured, listAreas } from "@/lib/data/carrier";
 import { formatTime } from "@/lib/time";
 import { deleteDepot, saveDepot } from "../../../actions";
 import { MissingCarrier } from "../../../notices";
@@ -14,11 +15,12 @@ export default async function DepotPage({ params }: PageProps<"/carrier/fleet/de
   const { id } = await params;
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
-  if (!carrier) return <MissingCarrier />;
+  const carrierId = currentCarrierId();
   const isNew = id === "new";
   if (!isNew && !/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const [depot, areas] = await Promise.all([isNew ? null : getDepot(carrier.id, id), listAreas()]);
+  const [carrier, depot, areas] = await Promise.all([
+    getCarrier(),isNew ? null : getDepot(carrierId, id), listAreas()]);
+  if (!carrier) return <MissingCarrier />;
   if (!isNew && !depot) notFound();
 
   return (

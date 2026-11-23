@@ -3,7 +3,8 @@ import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 
 const jp = Noto_Sans_JP({
-  weight: ["400", "500", "700"],
+  // 日本語フォントは文字数が多く重いので、太さは2種類だけ読み込む（500 は 400 で表示される）
+  weight: ["400", "700"],
   subsets: ["latin"],
   variable: "--font-jp",
   display: "swap",

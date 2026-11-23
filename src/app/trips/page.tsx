@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { connection } from "next/server";
 import { BoardRow, Segmented } from "@/components/trip-board";
@@ -98,7 +99,7 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
             { href: hrefWith(s, { dir: "arr" }), label: "到着便", active: s.dir === "arr" },
           ]}
         />
-        <form method="get" role="search" className="flex rounded-[10px] border border-mist bg-white focus-within:border-primary">
+        <Form action="/trips" role="search" className="flex rounded-[10px] border border-mist bg-white focus-within:border-primary">
           {/* 検索しても、ほかの条件は保つ */}
           {s.dir === "arr" && <input type="hidden" name="dir" value="arr" />}
           {s.area && <input type="hidden" name="area" value={s.area} />}
@@ -118,7 +119,7 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
               <line x1="13" y1="13" x2="18" y2="18" stroke="#033b7d" strokeWidth="1.8" />
             </svg>
           </button>
-        </form>
+        </Form>
       </div>
 
       <section className="-mx-4 mt-6 rounded-t-2xl bg-white px-4 pt-6 pb-6 md:mx-0 md:rounded-2xl md:p-12">

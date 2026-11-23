@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { PageHeader, Section, SetupNotice } from "@/components/page-header";
 import { requireAdminPage } from "@/lib/auth";
-import { getCarrier, isDatabaseConfigured, listAreas, listDepots, listVehicles } from "@/lib/data/carrier";
+import { currentCarrierId,
+  getCarrier, isDatabaseConfigured, listAreas, listDepots, listVehicles } from "@/lib/data/carrier";
 import { BODY_TYPES, TEMPERATURES } from "@/lib/labels";
 import { formatTime } from "@/lib/time";
 import { logout } from "../../login/actions";
@@ -11,9 +12,10 @@ import { MissingCarrier } from "../notices";
 export default async function FleetPage() {
   await requireAdminPage();
   if (!isDatabaseConfigured()) return <SetupNotice />;
-  const carrier = await getCarrier();
+  const carrierId = currentCarrierId();
+  const [carrier, depots, vehicles, areas] = await Promise.all([
+    getCarrier(),listDepots(carrierId), listVehicles(carrierId), listAreas()]);
   if (!carrier) return <MissingCarrier />;
-  const [depots, vehicles, areas] = await Promise.all([listDepots(carrier.id), listVehicles(carrier.id), listAreas()]);
   const areaName = new Map(areas.map((a) => [a.id, a.name]));
 
   return (
