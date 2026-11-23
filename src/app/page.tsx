@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/logo";
@@ -52,7 +53,21 @@ export default function Home() {
         空いています。
       </h1>
 
-      <div className="flex flex-1 items-center py-[4svh]">
+      {/* トヨタモビリティへの提案用の写真（行きは満載、帰りは空き…のトラック） */}
+      <figure className="mt-[3svh]">
+        <Image
+          src="/images/top-truck.jpg"
+          alt="荷台の大きなトラック"
+          width={320}
+          height={240}
+          preload
+          sizes="(max-width: 448px) 100vw, 408px"
+          className="aspect-[4/3] w-full rounded-2xl object-cover"
+        />
+        <figcaption className="mt-1 text-right text-[10px] text-gray">提案用イメージ</figcaption>
+      </figure>
+
+      <div className="flex flex-1 items-center py-[3svh]">
         <TripGraphic />
       </div>
 
