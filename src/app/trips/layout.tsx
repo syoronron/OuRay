@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Logo } from "@/components/logo";
+import { LoadingLogo, Logo } from "@/components/logo";
 
 /** 荷主向けの公開ページ（便をさがす） */
 export default function TripsLayout({ children }: LayoutProps<"/trips">) {
@@ -15,7 +15,7 @@ export default function TripsLayout({ children }: LayoutProps<"/trips">) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-5 pb-12">
-        <Suspense fallback={<p className="text-sm text-gray">読み込み中…</p>}>{children}</Suspense>
+        <Suspense fallback={<LoadingLogo />}>{children}</Suspense>
       </main>
     </div>
   );

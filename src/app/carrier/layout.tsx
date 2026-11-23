@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Logo } from "@/components/logo";
+import { LoadingLogo, Logo } from "@/components/logo";
 import { CarrierNav } from "./carrier-nav";
 
 export default function CarrierLayout({ children }: LayoutProps<"/carrier">) {
@@ -15,7 +15,7 @@ export default function CarrierLayout({ children }: LayoutProps<"/carrier">) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-md flex-1 px-4 pt-5 pb-28 print:max-w-none print:p-0">
-        <Suspense fallback={<p className="text-sm text-gray">読み込み中…</p>}>{children}</Suspense>
+        <Suspense fallback={<LoadingLogo />}>{children}</Suspense>
       </main>
       <Suspense>
         <CarrierNav />
