@@ -132,13 +132,18 @@ export default async function BoardTripPage({ params }: PageProps<"/trips/[id]">
       </div>
 
       <div className="mt-5">
-        <button
-          type="button"
-          disabled
-          className="min-h-14 w-full rounded-[10px] bg-primary font-bold text-white disabled:opacity-40"
-        >
-          {isBookable(status) ? "この便を予約する（準備中）" : `予約できません（${status.label}）`}
-        </button>
+        {isBookable(status) ? (
+          <Link
+            href={`/trips/${trip.id}/book`}
+            className="flex min-h-14 w-full items-center justify-center rounded-[10px] bg-primary font-bold text-white"
+          >
+            この便を予約する
+          </Link>
+        ) : (
+          <p className="flex min-h-14 w-full items-center justify-center rounded-[10px] bg-white font-bold text-gray">
+            予約できません（{status.label}）
+          </p>
+        )}
         <p className="mt-2 text-center text-xs text-gray">
           運送の契約は、荷主さまと{carrier.name}の間で結びます。OuRay は予約の仲介をします。
         </p>

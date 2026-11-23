@@ -111,6 +111,8 @@ export type Trip = {
   booked_pallets: number;
   booked_kg: number;
   booking_count: number;
+  /** 承認待ちの申込の数 */
+  requested_count: number;
 };
 
 export type CargoCategory = {
@@ -232,7 +234,7 @@ const TRIP_COLUMNS =
 /** 予約の状態のうち「枠を使っている」もの（DB の booking_holds_capacity と同じ） */
 const HOLDING = new Set(["requested", "confirmed", "loaded", "in_transit", "delivered"]);
 
-type TripRow = Omit<Trip, "booked_pallets" | "booked_kg" | "booking_count"> & {
+type TripRow = Omit<Trip, "booked_pallets" | "booked_kg" | "booking_count" | "requested_count"> & {
   bookings: { pallets: number; weight_kg: number; status: string }[] | null;
 };
 function toTrip({ bookings, ...t }: TripRow): Trip {
@@ -242,6 +244,7 @@ function toTrip({ bookings, ...t }: TripRow): Trip {
     booked_pallets: holding.reduce((s, b) => s + b.pallets, 0),
     booked_kg: holding.reduce((s, b) => s + b.weight_kg, 0),
     booking_count: holding.length,
+    requested_count: (bookings ?? []).filter((b) => b.status === "requested").length,
   };
 }
 

@@ -13,6 +13,8 @@ import {
   listVehicles,
 } from "@/lib/data/carrier";
 import { BODY_TYPES, DIRECTIONS } from "@/lib/labels";
+import { BOOKING_STATUSES } from "@/lib/booking";
+import { listCarrierBookings } from "@/lib/data/bookings";
 import { formatDateTime, formatDuration, formatTripTimes, formatDateShort, toJst } from "@/lib/time";
 import { deleteTrip, setTripStatus, updateTrip } from "../../actions";
 import { MissingCarrier } from "../../notices";
@@ -30,11 +32,12 @@ export default async function TripPage({ params }: PageProps<"/carrier/trips/[id
 
   const trip = await getTrip(carrier.id, id);
   if (!trip) notFound();
-  const [depots, vehicles, routes, categories] = await Promise.all([
+  const [depots, vehicles, routes, categories, { bookings, shippers }] = await Promise.all([
     listDepots(carrier.id),
     listVehicles(carrier.id),
     listRoutes(carrier.id),
     listCategories(),
+    listCarrierBookings([trip.id]),
   ]);
   const depot = (depotId: string) => depots.find((d) => d.id === depotId)?.name ?? "—";
   const vehicle = vehicles.find((v) => v.id === trip.vehicle_id);
@@ -113,6 +116,39 @@ export default async function TripPage({ params }: PageProps<"/carrier/trips/[id
                 この便の空き・料金を保存する
               </SubmitButton>
             </ActionForm>
+          )}
+        </Section>
+
+        <Section
+          title="この便の予約"
+          aside={
+            <Link href="/carrier/bookings" className="text-sm text-navy underline underline-offset-4">
+              予約の画面へ
+            </Link>
+          }
+        >
+          {bookings.length === 0 ? (
+            <p className="text-sm text-gray">まだ予約はありません。</p>
+          ) : (
+            <ul className="grid gap-2">
+              {bookings.map((b) => (
+                <li key={b.id} className="flex items-center justify-between gap-2 rounded-[5px] bg-paper px-3 py-2 text-sm">
+                  <span>
+                    {shippers.get(b.shipper_id)?.name ?? "—"}
+                    <span className="num ml-2 text-gray">
+                      {b.pallets}枠・{b.weight_kg.toLocaleString()}kg{b.pickup_address || b.dropoff_address ? "・寄り道" : ""}
+                    </span>
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-[5px] border bg-white px-2 py-0.5 text-xs ${
+                      b.status === "requested" ? "border-primary text-primary" : "border-mist text-gray"
+                    }`}
+                  >
+                    {BOOKING_STATUSES[b.status]}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </Section>
 

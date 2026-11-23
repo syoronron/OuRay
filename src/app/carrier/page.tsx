@@ -22,11 +22,14 @@ export default async function TripsPage({ searchParams }: PageProps<"/carrier">)
   if (!carrier) return <MissingCarrier />;
 
   const week = resolveWeek(weekParam);
-  const [trips, routes, depots] = await Promise.all([
+  const [trips, routes, depots, upcoming] = await Promise.all([
     listTrips(carrier.id, jstToDate(week.from, 0), jstToDate(addDays(week.to, 1), 0)),
     listRoutes(carrier.id),
     listDepots(carrier.id),
+    // 承認待ちの申込は、表示中の週にかかわらず数える
+    listTrips(carrier.id, new Date(), jstToDate(addDays(todayJst(), 60), 0)),
   ]);
+  const waiting = upcoming.reduce((s, t) => s + t.requested_count, 0);
   const depotName = new Map(depots.map((d) => [d.id, d.name]));
   const routeById = new Map(routes.map((r) => [r.id, r]));
   const now = new Date();
@@ -42,6 +45,12 @@ export default async function TripsPage({ searchParams }: PageProps<"/carrier">)
       </PageHeader>
 
       <div className="grid gap-4">
+        {waiting > 0 && (
+          <Link href="/carrier/bookings" className="flex min-h-14 items-center justify-between rounded-2xl bg-primary px-5 font-bold text-white">
+            承認待ちの予約が {waiting}件 あります
+            <span aria-hidden>→</span>
+          </Link>
+        )}
         <Section title="便を作る">
           <p className="text-sm leading-relaxed text-gray">
             定期ルートから、今日から{GENERATE_DAYS / 7}週間分の便を下書きで作ります。公開中の便・予約のある便はそのまま残ります。

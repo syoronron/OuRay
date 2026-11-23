@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
  */
 const tabs = [
   { href: "/carrier", label: "便", icon: "trips" },
+  { href: "/carrier/bookings", label: "予約", icon: "bookings" },
   { href: "/carrier/routes", label: "定期ルート", icon: "routes" },
   { href: "/carrier/fleet", label: "拠点・車両", icon: "fleet" },
 ] as const;
@@ -30,6 +31,15 @@ function Icon({ name, active }: { name: (typeof tabs)[number]["icon"]; active: b
           <rect x="2" y="5" width="16" height="10" fill="none" {...s} />
           <rect x="2" y="5" width="8" height="10" fill={fill} {...s} />
           <line x1="10" y1="5" x2="10" y2="15" {...s} />
+        </svg>
+      );
+    case "bookings":
+      // 予約：荷札
+      return (
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden>
+          <path d="M3 3h9l5 5v9H3z" fill={fill} {...s} />
+          <line x1="6" y1="11" x2="14" y2="11" stroke={active ? "#fff" : color} strokeWidth={1.5} />
+          <line x1="6" y1="14" x2="11" y2="14" stroke={active ? "#fff" : color} strokeWidth={1.5} />
         </svg>
       );
     case "routes":
@@ -70,7 +80,7 @@ export function CarrierNav() {
   const pathname = usePathname();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] print:hidden">
-      <ul className="mx-auto grid max-w-md grid-cols-3">
+      <ul className="mx-auto grid max-w-md grid-cols-4">
         {tabs.map((tab) => {
           const active = isActive(tab.href, pathname);
           return (

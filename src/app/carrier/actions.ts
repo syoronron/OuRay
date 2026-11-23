@@ -561,3 +561,39 @@ export async function deleteTrip(_: ActionState, formData: FormData): Promise<Ac
   if (error) return failure(explain(error));
   redirect("/carrier");
 }
+
+// =====================================================================
+// 予約の承認・お断り（P2）
+// =====================================================================
+
+const decideSchema = z.object({
+  id: uuid,
+  decision: z.enum(["confirmed", "rejected"]),
+  message: optionalText(200),
+});
+
+export async function decideBooking(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return failure(LOGIN_REQUIRED);
+  const parsed = parse(decideSchema, formData);
+  if (parsed.error !== undefined) return failure(parsed.error);
+  const { id, decision, message } = parsed.data;
+  if (decision === "rejected" && !message) {
+    return failure("お断りの理由を入力してください（荷主のページに表示されます）。");
+  }
+  const carrier = await requireCarrier();
+  const { error } = await db().rpc("decide_booking", {
+    p_company_id: carrier.id,
+    p_booking_id: id,
+    p_decision: decision,
+    p_message: message,
+  });
+  if (error) {
+    if (error.message.includes("not_requested")) {
+      return failure("この予約は、すでに承認・お断り・キャンセルのいずれかになっています。ページを再読み込みしてください。");
+    }
+    if (error.message.includes("booking_not_found")) return failure("予約が見つかりません。ページを再読み込みしてください。");
+    return failure(explain(error));
+  }
+  refresh();
+  return success(decision === "confirmed" ? "予約を確定しました。荷主のページに「予約確定」と表示されます。" : "お断りしました。荷主のページに理由が表示されます。");
+}
