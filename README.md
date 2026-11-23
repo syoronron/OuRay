@@ -129,9 +129,11 @@ src/app/b/[token]/        荷主の予約確認ページ（推測できないURL
 2. 左メニューの **SQL Editor** を開き、次のファイルを順番に貼り付けて「Run」を押します
    1. `supabase/migrations/20261201000000_init.sql`（テーブル作成・予約の受付処理）
    2. `supabase/migrations/20261202000000_trips.sql`（便の作成・公開・運休の処理）
-   3. `supabase/seed.sql`（デモ用データ）
+   3. `supabase/migrations/20261203000000_grants.sql`（アプリにテーブルの読み書きを許可する）
+   4. `supabase/seed.sql`（デモ用データ）
 
-   > どちらも何回実行しても大丈夫です。
+   > どれも何回実行しても大丈夫です。
+> トップページに「permission denied for table ...」と出たら、3 を実行していないか、実行前に作ったテーブルがあります。3 をもう一度実行してください。
 3. **Project Settings** から次の2つを控えます
    - **Data API → Project URL** … `SUPABASE_URL`
    - **API Keys → Secret key**（`sb_secret_` で始まるもの）… `SUPABASE_SECRET_KEY`

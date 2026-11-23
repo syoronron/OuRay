@@ -22,7 +22,7 @@ function explainDbError(error: { message: string; code?: string }): string {
     return `Supabase に接続できません。SUPABASE_URL が正しいか確認してください。（${m}）`;
   }
   if (error.code === "42501" || /permission denied/i.test(m)) {
-    return `データベースの権限がありません。キーが Secret key（または service_role キー）か確認してください。（${m}）`;
+    return `データベースの権限がありません。Supabase の SQL Editor で supabase/migrations/20261203000000_grants.sql を実行してください。それでも直らなければ、キーが Secret key（または service_role キー）か確認してください。（${m}）`;
   }
   return m;
 }
