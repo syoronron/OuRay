@@ -41,6 +41,19 @@ function TripGraphic() {
 /** トップページ：1枚のポスターのように、文字は最小限（Zicci と同じ考え方） */
 export default function Home() {
   return (
+    <>
+      {/* 背景：トラックの写真（トヨタモビリティへの提案用）。文字が読みやすいよう、上に薄い白の層を重ねる */}
+      <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden>
+        <Image
+          src="/images/top-truck.jpg"
+          alt=""
+          fill
+          preload
+          sizes="100vw"
+          className="object-cover object-[78%_center] md:object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-paper/95 via-paper/55 to-paper/95" />
+      </div>
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col px-5 pt-4 pb-4">
       <header className="flex items-center justify-between border-b border-line pb-3">
         <Logo size={22} />
@@ -53,21 +66,7 @@ export default function Home() {
         空いています。
       </h1>
 
-      {/* トヨタモビリティへの提案用の写真（行きは満載、帰りは空き…のトラック） */}
-      <figure className="mt-[3svh]">
-        <Image
-          src="/images/top-truck.jpg"
-          alt="荷台の大きなトラック"
-          width={320}
-          height={240}
-          preload
-          sizes="(max-width: 448px) 100vw, 408px"
-          className="aspect-[4/3] w-full rounded-2xl object-cover"
-        />
-        <figcaption className="mt-1 text-right text-[10px] text-gray">提案用イメージ</figcaption>
-      </figure>
-
-      <div className="flex flex-1 items-center py-[3svh]">
+      <div className="flex flex-1 items-center py-[4svh]">
         <TripGraphic />
       </div>
 
@@ -109,5 +108,6 @@ export default function Home() {
         </Suspense>
       </footer>
     </main>
+    </>
   );
 }
