@@ -36,7 +36,7 @@ const toMinutes = (v: string | null) => (v ? parseTime(v) : null);
 
 // ---------- 型 ----------
 
-export type Carrier = { id: string; name: string; carrier_license_no: string | null };
+export type Carrier = { id: string; name: string; code: string | null; carrier_license_no: string | null };
 
 export type Area = { id: string; name: string };
 
@@ -68,6 +68,8 @@ export type Vehicle = {
 
 export type Route = {
   id: string;
+  /** 便名の番号（DM102 の 102） */
+  number: number | null;
   vehicle_id: string;
   origin_depot_id: string;
   dest_depot_id: string;
@@ -123,7 +125,7 @@ export type CargoCategory = {
 export async function getCarrier(): Promise<Carrier | null> {
   const { data, error } = await db()
     .from("companies")
-    .select("id, name, carrier_license_no")
+    .select("id, name, code, carrier_license_no")
     .eq("id", DEMO_CARRIER_ID)
     .eq("is_carrier", true)
     .maybeSingle();
@@ -199,7 +201,7 @@ export async function getVehicle(companyId: string, id: string): Promise<Vehicle
 }
 
 const ROUTE_COLUMNS =
-  "id, vehicle_id, origin_depot_id, dest_depot_id, direction, paired_route_id, weekdays, depart_time, duration_minutes, capacity_pallets, capacity_kg, price_per_pallet, booking_cutoff_hours, requires_approval, accepted_categories, detour_max_km, detour_fee, active_from, active_until";
+  "id, number, vehicle_id, origin_depot_id, dest_depot_id, direction, paired_route_id, weekdays, depart_time, duration_minutes, capacity_pallets, capacity_kg, price_per_pallet, booking_cutoff_hours, requires_approval, accepted_categories, detour_max_km, detour_fee, active_from, active_until";
 type RouteRow = Omit<Route, "depart"> & { depart_time: string };
 const toRoute = ({ depart_time, ...r }: RouteRow): Route => ({ ...r, depart: toMinutes(depart_time) ?? 0 });
 

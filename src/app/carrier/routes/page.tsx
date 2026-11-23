@@ -4,6 +4,7 @@ import { requireAdminPage } from "@/lib/auth";
 import { getCarrier, isDatabaseConfigured, listDepots, listRoutes, listVehicles, type Route } from "@/lib/data/carrier";
 import { DIRECTIONS } from "@/lib/labels";
 import { formatDuration, formatTime, weekdayLabel } from "@/lib/time";
+import { tripCode } from "@/lib/trips/board";
 import { MissingCarrier, NeedFleet } from "../notices";
 
 /** 定期ルートの一覧。行き・帰りの組をまとめて表示する */
@@ -53,6 +54,7 @@ export default async function RoutesPage() {
             <Link key={r.id} href={`/carrier/routes/${r.id}`} className="block border border-ink bg-white p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-bold">
+                  <span className="num mr-2 text-sm">{r.number !== null ? tripCode(carrier.code, r.number) : "—"}</span>
                   {depotName.get(r.origin_depot_id)} <span className="num text-gray">→</span> {depotName.get(r.dest_depot_id)}
                 </p>
                 <span

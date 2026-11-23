@@ -6,6 +6,7 @@
 
 -- ---------------------------------------------------------------------
 -- 会社：運送会社1社（トヨタモビリティを想定）、荷主2社（介護施設・自動車部品）
+-- 拠点4つ・車両2台・定期ルート8本（行き・帰り4組）
 -- ---------------------------------------------------------------------
 insert into public.companies (id, name, is_carrier, is_shipper, carrier_license_no, contact_name, phone, status) values
   ('00000000-0000-0000-0000-000000000c01', 'デモ運送',       true,  false, 'デモ-0001', '配車担当', '000-0000-0001', 'approved'),
@@ -76,8 +77,63 @@ insert into public.routes (id, company_id, vehicle_id, origin_depot_id, dest_dep
    array['auto_parts','returnable_container','general','linen_clean','linen_soiled','care_supplies'], 15, 2500)
 on conflict (id) do nothing;
 
+-- 平日毎日の短い路線（便の一覧がにぎやかになるように）
+insert into public.depots (id, company_id, area_id, name, address, open_time, close_time, has_forklift, note) values
+  ('00000000-0000-0000-0000-0000000000d4', '00000000-0000-0000-0000-000000000c01', '00000000-0000-0000-0000-0000000000a2',
+   '静岡店', '静岡県静岡市（デモ）', '08:00', '18:00', true, null)
+on conflict (id) do nothing;
+
+insert into public.routes (id, company_id, vehicle_id, origin_depot_id, dest_depot_id, direction, paired_route_id,
+                           weekdays, depart_time, duration_minutes, capacity_pallets, capacity_kg, price_per_pallet,
+                           booking_cutoff_hours, requires_approval, accepted_categories, detour_max_km, detour_fee) values
+  -- 名古屋 → 静岡（行き）平日 8:00 発
+  ('00000000-0000-0000-0000-0000000000b5', '00000000-0000-0000-0000-000000000c01', '00000000-0000-0000-0000-0000000000e1',
+   '00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000d4', 'outbound', null,
+   '{1,2,3,4,5}', '08:00', 180, 0, 0, 5000, 24, true,
+   array['auto_parts','returnable_container','general'], 0, 0),
+  -- 静岡 → 名古屋（帰り）平日 14:30 発。介護施設のリネン（衛生物）も受ける
+  ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-000000000c01', '00000000-0000-0000-0000-0000000000e1',
+   '00000000-0000-0000-0000-0000000000d4', '00000000-0000-0000-0000-0000000000d1', 'return', '00000000-0000-0000-0000-0000000000b5',
+   '{1,2,3,4,5}', '14:30', 180, 8, 3000, 5000, 24, true,
+   array['auto_parts','returnable_container','general','linen_clean','linen_soiled','care_supplies'], 10, 2000),
+  -- 東京 → 横浜（行き）平日 7:00 発
+  ('00000000-0000-0000-0000-0000000000b7', '00000000-0000-0000-0000-000000000c01', '00000000-0000-0000-0000-0000000000e2',
+   '00000000-0000-0000-0000-0000000000d2', '00000000-0000-0000-0000-0000000000d3', 'outbound', null,
+   '{1,2,3,4,5}', '07:00', 90, 0, 0, 3000, 24, true,
+   array['auto_parts','returnable_container','general'], 0, 0),
+  -- 横浜 → 東京（帰り）平日 12:00 発
+  ('00000000-0000-0000-0000-0000000000b8', '00000000-0000-0000-0000-000000000c01', '00000000-0000-0000-0000-0000000000e2',
+   '00000000-0000-0000-0000-0000000000d3', '00000000-0000-0000-0000-0000000000d2', 'return', '00000000-0000-0000-0000-0000000000b7',
+   '{1,2,3,4,5}', '12:00', 90, 12, 8000, 3000, 24, true,
+   array['auto_parts','returnable_container','general','linen_clean','care_supplies'], 5, 1500)
+on conflict (id) do nothing;
+
 -- 行き便から帰り便をたどれるように、組を両方向に結ぶ
 update public.routes set paired_route_id = '00000000-0000-0000-0000-0000000000b2'
  where id = '00000000-0000-0000-0000-0000000000b1' and paired_route_id is null;
 update public.routes set paired_route_id = '00000000-0000-0000-0000-0000000000b4'
  where id = '00000000-0000-0000-0000-0000000000b3' and paired_route_id is null;
+update public.routes set paired_route_id = '00000000-0000-0000-0000-0000000000b6'
+ where id = '00000000-0000-0000-0000-0000000000b5' and paired_route_id is null;
+update public.routes set paired_route_id = '00000000-0000-0000-0000-0000000000b8'
+ where id = '00000000-0000-0000-0000-0000000000b7' and paired_route_id is null;
+
+-- 便名（DM101 など）。20261204000000_trip_codes.sql を実行したあとに有効
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'routes' and column_name = 'number') then
+    update public.companies set code = 'DM' where id = '00000000-0000-0000-0000-000000000c01' and code is null;
+    update public.routes set number = v.n
+    from (values
+      ('00000000-0000-0000-0000-0000000000b1'::uuid, 101),
+      ('00000000-0000-0000-0000-0000000000b2'::uuid, 102),
+      ('00000000-0000-0000-0000-0000000000b3'::uuid, 201),
+      ('00000000-0000-0000-0000-0000000000b4'::uuid, 202),
+      ('00000000-0000-0000-0000-0000000000b5'::uuid, 301),
+      ('00000000-0000-0000-0000-0000000000b6'::uuid, 302),
+      ('00000000-0000-0000-0000-0000000000b7'::uuid, 401),
+      ('00000000-0000-0000-0000-0000000000b8'::uuid, 402)
+    ) as v(id, n)
+    where routes.id = v.id and routes.number is null;
+  end if;
+end $$;

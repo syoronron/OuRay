@@ -285,6 +285,7 @@ const tripFields = {
 
 const routeSchema = z.object({
   id: optionalUuid,
+  number: optionalInt("便名の番号", 1, 9999),
   direction: oneOf(DIRECTIONS, "行き・帰り"),
   paired_route_id: optionalUuid,
   weekdays: z
@@ -363,7 +364,7 @@ export async function saveRoute(_: ActionState, formData: FormData): Promise<Act
     ? db().from("routes").update(row).eq("id", id).eq("company_id", carrier.id).select("id").single()
     : db().from("routes").insert(row).select("id").single();
   const { data, error } = await query;
-  if (error) return failure(explain(error));
+  if (error) return failure(explain(error, "同じ便名の番号が、ほかの定期ルートで使われています。"));
 
   // 組になるルートからも、このルートをたどれるようにする（まだ組がないときだけ）
   if (paired_route_id) {

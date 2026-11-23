@@ -5,12 +5,13 @@ import { WeekNav } from "@/components/week-nav";
 import { requireAdminPage } from "@/lib/auth";
 import { getCarrier, isDatabaseConfigured, listDepots, listRoutes, listTrips } from "@/lib/data/carrier";
 import { DIRECTIONS } from "@/lib/labels";
-import { addDays, formatDateShort, jstToDate, todayJst, toJst } from "@/lib/time";
+import { addDays, formatDateShort, formatDuration, formatTime, jstToDate, todayJst, toJst } from "@/lib/time";
 import { GENERATE_DAYS } from "@/lib/trips/generate";
 import { resolveWeek } from "@/lib/week";
 import { publishWeek, regenerateTrips } from "./actions";
 import { MissingCarrier } from "./notices";
-import { TripCard } from "./trip-card";
+import { BoardRow } from "@/components/trip-board";
+import { boardStatus, tripCode } from "@/lib/trips/board";
 
 /** 便：週ごとの便の一覧。定期ルートから作る → 確認 → 公開 */
 export default async function TripsPage({ searchParams }: PageProps<"/carrier">) {
@@ -27,7 +28,8 @@ export default async function TripsPage({ searchParams }: PageProps<"/carrier">)
     listDepots(carrier.id),
   ]);
   const depotName = new Map(depots.map((d) => [d.id, d.name]));
-  const routeLabel = new Map(routes.map((r) => [r.id, DIRECTIONS[r.direction]]));
+  const routeById = new Map(routes.map((r) => [r.id, r]));
+  const now = new Date();
   const drafts = trips.filter((t) => t.status === "draft" && t.capacity_pallets > 0).length;
   const published = trips.filter((t) => t.status === "published");
   const freeSlots = published.reduce((s, t) => s + t.capacity_pallets - t.booked_pallets, 0);
@@ -86,15 +88,32 @@ export default async function TripsPage({ searchParams }: PageProps<"/carrier">)
                   {day === today && <span className="bg-ink px-1.5 text-[10px] text-white">今日</span>}
                 </h2>
                 <div className="grid gap-2">
-                  {dayTrips.map((t) => (
-                    <TripCard
-                      key={t.id}
-                      trip={t}
-                      originName={depotName.get(t.origin_depot_id) ?? "—"}
-                      destName={depotName.get(t.dest_depot_id) ?? "—"}
-                      label={t.route_id ? (routeLabel.get(t.route_id) ?? "定期") : "臨時"}
-                    />
-                  ))}
+                  {dayTrips.map((t) => {
+                    const route = t.route_id ? routeById.get(t.route_id) : undefined;
+                    const minutes = Math.round((new Date(t.arrive_at).getTime() - new Date(t.depart_at).getTime()) / 60_000);
+                    return (
+                      <BoardRow
+                        key={t.id}
+                        href={`/carrier/trips/${t.id}`}
+                        time={formatTime(toJst(t.depart_at).minutes)}
+                        destination={`${depotName.get(t.dest_depot_id) ?? "—"} 行き`}
+                        code={tripCode(carrier.code, route?.number ?? null)}
+                        carrier={`${depotName.get(t.origin_depot_id) ?? "—"} 発・${route ? DIRECTIONS[route.direction] + "便" : "臨時便"}・${formatDuration(minutes)}`}
+                        details={
+                          t.capacity_pallets === 0 ? (
+                            "売る枠なし（満載）"
+                          ) : (
+                            <>
+                              空き {t.capacity_pallets - t.booked_pallets}/{t.capacity_pallets}枠
+                              {t.booking_count > 0 && `・予約 ${t.booking_count}件`}・1枠 {t.price_per_pallet.toLocaleString()}円
+                            </>
+                          )
+                        }
+                        status={boardStatus(t, now)}
+                        dimmed={t.status === "cancelled"}
+                      />
+                    );
+                  })}
                 </div>
               </section>
             );

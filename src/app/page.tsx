@@ -37,21 +37,6 @@ function TripGraphic() {
   );
 }
 
-function SoonButton({ label, who }: { label: string; who: string }) {
-  return (
-    <div
-      aria-disabled
-      className="flex min-h-13 items-center justify-between border border-ink bg-white px-4 font-bold text-gray"
-    >
-      <span>
-        {label}
-        <span className="ml-2 text-xs font-medium">{who}</span>
-      </span>
-      <span className="text-[11px] font-medium">準備中</span>
-    </div>
-  );
-}
-
 /** トップページ：1枚のポスターのように、文字は最小限（Zicci と同じ考え方） */
 export default function Home() {
   return (
@@ -77,7 +62,18 @@ export default function Home() {
       </p>
 
       <div className="mt-4 grid gap-2">
-        <SoonButton label="便をさがす" who="荷物を送りたい方" />
+        <Link
+          href="/trips"
+          className="flex min-h-13 items-center justify-between border border-ink bg-accent px-4 font-bold text-ink"
+        >
+          <span>
+            便をさがす
+            <span className="ml-2 text-xs font-medium">荷物を送りたい方</span>
+          </span>
+          <span className="num" aria-hidden>
+            →
+          </span>
+        </Link>
         <Link
           href="/carrier"
           className="flex min-h-13 items-center justify-between border border-ink bg-ink px-4 font-bold text-white"

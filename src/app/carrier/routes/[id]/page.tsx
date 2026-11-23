@@ -58,6 +58,21 @@ export default async function RoutePage({ params }: PageProps<"/carrier/routes/[
             <ActionForm action={saveRoute} className="grid gap-4">
               {route && <input type="hidden" name="id" value={route.id} />}
 
+              <Field label="便名の番号（任意）" hint={`便名は「${carrier.code ?? "OR"}＋番号」になります（例：${carrier.code ?? "OR"}102）。行きと帰りで続き番号にすると分かりやすいです。`}>
+                <div className="flex items-center gap-2">
+                  <span className="num shrink-0 text-lg font-bold">{carrier.code ?? "OR"}</span>
+                  <input
+                    name="number"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={9999}
+                    defaultValue={route?.number ?? ""}
+                    className="field num"
+                  />
+                </div>
+              </Field>
+
               <SubHeading>行き・帰り</SubHeading>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(DIRECTIONS).map(([value, label]) => (
