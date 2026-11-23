@@ -17,6 +17,7 @@ import {
 } from "@/lib/data/carrier";
 import { BODY_TYPES, DIRECTIONS, PLATE_KINDS, TEMPERATURES, TRIP_STATUSES } from "@/lib/labels";
 import { savePhoto } from "@/lib/photos";
+import { parseDepotTable } from "@/lib/depot-import";
 import { addDays, jstToDate, parseTime, todayJst } from "@/lib/time";
 import { GENERATE_DAYS, generateTrips } from "@/lib/trips/generate";
 import { resolveWeek } from "@/lib/week";
@@ -728,4 +729,46 @@ export async function recordCleaning(_: ActionState, formData: FormData): Promis
   if (error) return opsError(error);
   refresh();
   return success("荷台の清掃を記録しました。");
+}
+
+// =====================================================================
+// 拠点の一括登録（Excel などからの貼り付け）
+// =====================================================================
+
+/** 同じ拠点名があれば上書き、なければ追加する。エリアは名前で探し、なければ作る */
+export async function importDepots(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return failure(LOGIN_REQUIRED);
+  const { rows, errors } = parseDepotTable(String(formData.get("table") ?? ""));
+  if (errors.length > 0) {
+    return failure(`${errors[0].line}行目：${errors[0].message}（ほか ${errors.length - 1}件）。直してから登録してください。`);
+  }
+  if (rows.length === 0) return failure("登録する拠点がありません。表を貼り付けてください。");
+  const carrier = await requireCarrier();
+
+  const areaNames = [...new Set(rows.map((r) => r.area))];
+  const { data: areas, error: areaError } = await db()
+    .from("areas")
+    .upsert(areaNames.map((name) => ({ name })), { onConflict: "name" })
+    .select("id, name");
+  if (areaError) return failure(explain(areaError));
+  const areaId = new Map((areas as { id: string; name: string }[]).map((a) => [a.name, a.id]));
+
+  const { error } = await db()
+    .from("depots")
+    .upsert(
+      rows.map((r) => ({
+        company_id: carrier.id,
+        area_id: areaId.get(r.area),
+        name: r.name,
+        address: r.address,
+        open_time: r.open,
+        close_time: r.close,
+        has_forklift: r.hasForklift,
+        note: r.note,
+      })),
+      { onConflict: "company_id,name" },
+    );
+  if (error) return failure(explain(error));
+  refresh();
+  return success(`${rows.length}件の拠点を登録しました（同じ名前の拠点は上書きしました）。`);
 }

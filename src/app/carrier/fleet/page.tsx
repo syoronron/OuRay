@@ -32,9 +32,14 @@ export default async function FleetPage() {
         <Section
           title="拠点"
           aside={
-            <Link href="/carrier/fleet/depots/new" className="text-sm font-bold underline underline-offset-4">
-              追加
-            </Link>
+            <span className="flex gap-4">
+              <Link href="/carrier/fleet/depots/import" className="text-sm text-navy underline underline-offset-4">
+                まとめて登録
+              </Link>
+              <Link href="/carrier/fleet/depots/new" className="text-sm font-bold underline underline-offset-4">
+                追加
+              </Link>
+            </span>
           }
         >
           <p className="mb-2 text-xs text-gray">荷物の持ち込み・受け取りをする場所です。荷主はエリアで便を探します。</p>
