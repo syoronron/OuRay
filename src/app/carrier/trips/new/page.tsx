@@ -8,10 +8,13 @@ import { addDays, todayJst } from "@/lib/time";
 import { addTrip } from "../../actions";
 import { MissingCarrier, NeedFleet } from "../../notices";
 import { Field, TripFields } from "../../trip-fields";
+import { connection } from "next/server";
 
 /** 臨時の便を1件だけ追加する（P1-9） */
 export default async function NewTripPage() {
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const carrierId = currentCarrierId();
   const [carrier, vehicles, depots, categories] = await Promise.all([

@@ -13,11 +13,14 @@ import { publishWeek, regenerateTrips } from "./actions";
 import { MissingCarrier } from "./notices";
 import { BoardRow } from "@/components/trip-board";
 import { boardStatus, tripCode } from "@/lib/trips/board";
+import { connection } from "next/server";
 
 /** 便：週ごとの便の一覧。定期ルートから作る → 確認 → 公開 */
 export default async function TripsPage({ searchParams }: PageProps<"/carrier">) {
   const { week: weekParam } = await searchParams;
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const carrierId = currentCarrierId();
 

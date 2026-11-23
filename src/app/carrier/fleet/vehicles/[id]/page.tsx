@@ -8,11 +8,14 @@ import { BODY_TYPES, PLATE_KINDS, TEMPERATURES } from "@/lib/labels";
 import { deleteVehicle, saveVehicle } from "../../../actions";
 import { MissingCarrier } from "../../../notices";
 import { Field, NumberInput, SubHeading } from "../../../trip-fields";
+import { connection } from "next/server";
 
 /** 車両の追加（/carrier/fleet/vehicles/new）・編集 */
 export default async function VehiclePage({ params }: PageProps<"/carrier/fleet/vehicles/[id]">) {
   const { id } = await params;
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const isNew = id === "new";
   if (!isNew && !/^[0-9a-f-]{36}$/i.test(id)) notFound();

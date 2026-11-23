@@ -7,10 +7,13 @@ import { BODY_TYPES, TEMPERATURES } from "@/lib/labels";
 import { formatTime } from "@/lib/time";
 import { logout } from "../../login/actions";
 import { MissingCarrier } from "../notices";
+import { connection } from "next/server";
 
 /** 拠点・車両の一覧 */
 export default async function FleetPage() {
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const carrierId = currentCarrierId();
   const [carrier, depots, vehicles, areas] = await Promise.all([

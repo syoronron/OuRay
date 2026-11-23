@@ -9,11 +9,14 @@ import { formatTime } from "@/lib/time";
 import { deleteDepot, saveDepot } from "../../../actions";
 import { MissingCarrier } from "../../../notices";
 import { Field } from "../../../trip-fields";
+import { connection } from "next/server";
 
 /** 拠点の追加（/carrier/fleet/depots/new）・編集 */
 export default async function DepotPage({ params }: PageProps<"/carrier/fleet/depots/[id]">) {
   const { id } = await params;
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const carrierId = currentCarrierId();
   const isNew = id === "new";

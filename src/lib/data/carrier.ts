@@ -107,6 +107,9 @@ export type Trip = {
   detour_max_km: number;
   detour_fee: number;
   status: TripStatus;
+  /** 衛生物を運んだあとの清掃の記録 */
+  cleaned_at: string | null;
+  cleaning_photo: string | null;
   /** 枠を使っている予約の合計 */
   booked_pallets: number;
   booked_kg: number;
@@ -238,7 +241,7 @@ export async function getRoute(companyId: string, id: string): Promise<Route | n
 }
 
 const TRIP_COLUMNS =
-  "id, route_id, vehicle_id, origin_depot_id, dest_depot_id, depart_at, arrive_at, capacity_pallets, capacity_kg, price_per_pallet, booking_cutoff_at, requires_approval, accepted_categories, detour_max_km, detour_fee, status, bookings(pallets, weight_kg, status)";
+  "id, route_id, vehicle_id, origin_depot_id, dest_depot_id, depart_at, arrive_at, capacity_pallets, capacity_kg, price_per_pallet, booking_cutoff_at, requires_approval, accepted_categories, detour_max_km, detour_fee, status, cleaned_at, cleaning_photo, bookings(pallets, weight_kg, status)";
 
 /** 予約の状態のうち「枠を使っている」もの（DB の booking_holds_capacity と同じ） */
 const HOLDING = new Set(["requested", "confirmed", "loaded", "in_transit", "delivered"]);

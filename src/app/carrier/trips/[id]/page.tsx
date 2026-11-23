@@ -14,18 +14,22 @@ import {
   listVehicles,
 } from "@/lib/data/carrier";
 import { BODY_TYPES, DIRECTIONS } from "@/lib/labels";
-import { BOOKING_STATUSES } from "@/lib/booking";
 import { listCarrierBookings } from "@/lib/data/bookings";
+import { signedPhotoUrls } from "@/lib/photos";
+import { TripOperations } from "./operations";
 import { formatDateTime, formatDuration, formatTripTimes, formatDateShort, toJst } from "@/lib/time";
 import { deleteTrip, setTripStatus, updateTrip } from "../../actions";
 import { MissingCarrier } from "../../notices";
 import { CapacityCells, StatusChip } from "../../trip-card";
 import { CategoryChecks, Field, NumberInput } from "../../trip-fields";
+import { connection } from "next/server";
 
 /** 便の詳細：状態を変える（公開・受付終了・運休）、空きと料金を調整する */
 export default async function TripPage({ params }: PageProps<"/carrier/trips/[id]">) {
   const { id } = await params;
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
@@ -42,6 +46,11 @@ export default async function TripPage({ params }: PageProps<"/carrier/trips/[id
   ]);
   if (!carrier) return <MissingCarrier />;
   if (!trip) notFound();
+  // 記録の写真を表示するための URL（1時間だけ有効）
+  const photoUrls = await signedPhotoUrls([
+    ...bookings.flatMap((b) => b.events.flatMap((e) => e.photo_paths)),
+    ...(trip.cleaning_photo ? [trip.cleaning_photo] : []),
+  ]);
   const depot = (depotId: string) => depots.find((d) => d.id === depotId)?.name ?? "—";
   const vehicle = vehicles.find((v) => v.id === trip.vehicle_id);
   const route = routes.find((r) => r.id === trip.route_id);
@@ -83,6 +92,8 @@ export default async function TripPage({ params }: PageProps<"/carrier/trips/[id
           {editable && <StatusButtons tripId={trip.id} status={trip.status} hasBookings={trip.booking_count > 0} />}
         </Section>
 
+        <TripOperations trip={trip} bookings={bookings} shippers={shippers} categories={categories} photoUrls={photoUrls} />
+
         <Section title="空き">
           {trip.capacity_pallets > 0 ? (
             <>
@@ -122,38 +133,6 @@ export default async function TripPage({ params }: PageProps<"/carrier/trips/[id
           )}
         </Section>
 
-        <Section
-          title="この便の予約"
-          aside={
-            <Link href="/carrier/bookings" className="text-sm text-navy underline underline-offset-4">
-              予約の画面へ
-            </Link>
-          }
-        >
-          {bookings.length === 0 ? (
-            <p className="text-sm text-gray">まだ予約はありません。</p>
-          ) : (
-            <ul className="grid gap-2">
-              {bookings.map((b) => (
-                <li key={b.id} className="flex items-center justify-between gap-2 rounded-[5px] bg-paper px-3 py-2 text-sm">
-                  <span>
-                    {shippers.get(b.shipper_id)?.name ?? "—"}
-                    <span className="num ml-2 text-gray">
-                      {b.pallets}枠・{b.weight_kg.toLocaleString()}kg{b.pickup_address || b.dropoff_address ? "・寄り道" : ""}
-                    </span>
-                  </span>
-                  <span
-                    className={`shrink-0 rounded-[5px] border bg-white px-2 py-0.5 text-xs ${
-                      b.status === "requested" ? "border-primary text-primary" : "border-mist text-gray"
-                    }`}
-                  >
-                    {BOOKING_STATUSES[b.status]}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
 
         {/* 運休にしたあとも結果のメッセージ（影響を受けた予約の数）が消えないよう、フォームは残す */}
         {(editable || trip.status === "cancelled") && (

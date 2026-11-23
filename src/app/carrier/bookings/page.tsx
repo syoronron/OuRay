@@ -20,10 +20,13 @@ import { addDays, formatDateShort, formatPhone, formatTime, jstToDate, todayJst,
 import { tripCode } from "@/lib/trips/board";
 import { decideBooking } from "../actions";
 import { MissingCarrier } from "../notices";
+import { connection } from "next/server";
 
 /** 予約：承認待ち → これからの予約（確定）→ 最近終わったもの */
 export default async function BookingsPage() {
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const carrierId = currentCarrierId();
 

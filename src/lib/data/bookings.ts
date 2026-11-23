@@ -33,14 +33,18 @@ export type Booking = {
   created_at: string;
   decided_at: string | null;
   cancelled_at: string | null;
+  received_by: string | null;
 };
 
 export type BookingEvent = {
   kind: string;
+  photo_paths: string[];
   message: string | null;
   created_by: "carrier" | "shipper" | "admin" | "system";
   created_at: string;
 };
+
+export type BookingWithEvents = Booking & { events: BookingEvent[] };
 
 export type Shipper = {
   id: string;
@@ -52,7 +56,7 @@ export type Shipper = {
 };
 
 const BOOKING_COLUMNS =
-  "id, trip_id, shipper_id, status, cargo_category, cargo_description, packaging, pieces, pallets, weight_kg, pickup_contact, pickup_phone, dropoff_contact, dropoff_phone, pickup_address, dropoff_address, unit_price, freight_amount, detour_amount, fee_amount, created_at, decided_at, cancelled_at";
+  "id, trip_id, shipper_id, status, cargo_category, cargo_description, packaging, pieces, pallets, weight_kg, pickup_contact, pickup_phone, dropoff_contact, dropoff_phone, pickup_address, dropoff_address, unit_price, freight_amount, detour_amount, fee_amount, created_at, decided_at, cancelled_at, received_by";
 
 function fail(what: string, error: { message: string }): never {
   throw new Error(`${what}の読み込みに失敗しました: ${error.message}`);
@@ -63,7 +67,7 @@ export async function getBookingByToken(token: string): Promise<{ booking: Booki
   if (!/^[0-9a-f]{64}$/.test(token)) return null;
   const { data, error } = await db()
     .from("bookings")
-    .select(`${BOOKING_COLUMNS}, booking_events(kind, message, created_by, created_at)`)
+    .select(`${BOOKING_COLUMNS}, booking_events(kind, message, photo_paths, created_by, created_at)`)
     .eq("access_token", token)
     .maybeSingle();
   if (error) fail("予約", error);
@@ -90,8 +94,11 @@ export async function getShipper(id: string): Promise<Shipper | null> {
  */
 export async function listCarrierBookings(
   where: { companyId: string; from: Date; to: Date } | { companyId: string; tripId: string },
-): Promise<{ bookings: Booking[]; shippers: Map<string, Shipper> }> {
-  let trips = db().from("trips").select(`id, bookings(${BOOKING_COLUMNS})`).eq("company_id", where.companyId);
+): Promise<{ bookings: BookingWithEvents[]; shippers: Map<string, Shipper> }> {
+  let trips = db()
+    .from("trips")
+    .select(`id, bookings(${BOOKING_COLUMNS}, booking_events(kind, message, photo_paths, created_by, created_at))`)
+    .eq("company_id", where.companyId);
   trips = "tripId" in where
     ? trips.eq("id", where.tripId)
     : trips.gte("depart_at", where.from.toISOString()).lt("depart_at", where.to.toISOString());
@@ -101,8 +108,12 @@ export async function listCarrierBookings(
   ]);
   if (tripRows.error) fail("予約", tripRows.error);
   if (shipperRows.error) fail("荷主", shipperRows.error);
-  const bookings = (tripRows.data as unknown as { bookings: Booking[] | null }[])
+  const bookings = (tripRows.data as unknown as { bookings: (Booking & { booking_events: BookingEvent[] | null })[] | null }[])
     .flatMap((t) => t.bookings ?? [])
+    .map(({ booking_events, ...b }) => ({
+      ...b,
+      events: (booking_events ?? []).sort((x, y) => x.created_at.localeCompare(y.created_at)),
+    }))
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
   return { bookings, shippers: new Map((shipperRows.data as Shipper[]).map((x) => [x.id, x])) };
 }

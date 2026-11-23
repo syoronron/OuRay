@@ -7,6 +7,7 @@ import { Section, SetupNotice } from "@/components/page-header";
 import { BOOKING_STATUSES, PACKAGING, STEPS, canCancel, stepIndex } from "@/lib/booking";
 import { loadBoardTrip } from "@/lib/data/board";
 import { getBookingByToken, getShipper } from "@/lib/data/bookings";
+import { signedPhotoUrls } from "@/lib/photos";
 import { isDatabaseConfigured } from "@/lib/data/carrier";
 import { TAX_RATE_PERCENT, yen } from "@/lib/money";
 import { formatDateShort, formatDateTime, formatPhone, formatTime, toJst } from "@/lib/time";
@@ -41,7 +42,12 @@ export default async function MyBookingPage({ params, searchParams }: PageProps<
   if (!data) notFound();
   const { booking, events } = data;
   // 荷主と便は、予約が分かれば同時に読める
-  const [shipper, tripData] = await Promise.all([getShipper(booking.shipper_id), loadBoardTrip(booking.trip_id)]);
+  const [shipper, tripData, photoUrls] = await Promise.all([
+    getShipper(booking.shipper_id),
+    loadBoardTrip(booking.trip_id),
+    // 積込・受け渡しなどの写真（1時間だけ有効な URL）
+    signedPhotoUrls(events.flatMap((e) => e.photo_paths)),
+  ]);
   if (!shipper) notFound();
   const trip = tripData?.trip;
   const carrier = trip ? tripData.carriers.get(trip.company_id) : undefined;
@@ -114,6 +120,20 @@ export default async function MyBookingPage({ params, searchParams }: PageProps<
         {booking.status === "requested" && (
           <p className="mt-4 rounded-[10px] bg-paper p-3 text-sm leading-relaxed text-gray">
             運送会社が内容を確認しています。確定すると、ここが「予約確定」に変わります。
+          </p>
+        )}
+        {booking.status === "loaded" && (
+          <p className="mt-4 rounded-[10px] bg-[#eef4fb] p-3 text-sm leading-relaxed">荷物を積み込みました。出発をお待ちください。</p>
+        )}
+        {booking.status === "in_transit" && trip && dest && (
+          <p className="mt-4 rounded-[10px] bg-[#eef4fb] p-3 text-sm leading-relaxed">
+            輸送中です。到着予定：{formatDateShort(toJst(trip.arrive_at).date)} {formatTime(toJst(trip.arrive_at).minutes)}（
+            {booking.dropoff_address ? booking.dropoff_address : dest.name}）
+          </p>
+        )}
+        {booking.status === "delivered" && (
+          <p className="mt-4 rounded-[10px] bg-[#eef4fb] p-3 text-sm leading-relaxed">
+            荷物を受け渡しました{booking.received_by && `（受け取り：${booking.received_by} 様）`}。ご利用ありがとうございました。
           </p>
         )}
         {booking.status === "confirmed" && trip && origin && (
@@ -231,9 +251,17 @@ export default async function MyBookingPage({ params, searchParams }: PageProps<
           {events.map((e, i) => (
             <li key={i} className="flex gap-3 text-sm">
               <span className="num w-28 shrink-0 text-gray">{formatDateTime(e.created_at)}</span>
-              <span>
+              <span className={e.kind === "damage" || e.kind === "delay" ? "font-bold text-warn" : ""}>
                 {EVENT_LABELS[e.kind] ?? e.kind}
-                {e.message && <span className="block text-gray">{e.message}</span>}
+                {e.message && <span className="block font-normal text-gray">{e.message}</span>}
+                {e.photo_paths.map((path) =>
+                  photoUrls.get(path) ? (
+                    <a key={path} href={photoUrls.get(path)} target="_blank" rel="noreferrer" className="mt-1 block w-fit">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photoUrls.get(path)} alt="荷物の写真" className="h-24 rounded-[5px] object-cover" />
+                    </a>
+                  ) : null,
+                )}
               </span>
             </li>
           ))}

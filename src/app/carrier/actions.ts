@@ -16,6 +16,7 @@ import {
   type Vehicle,
 } from "@/lib/data/carrier";
 import { BODY_TYPES, DIRECTIONS, PLATE_KINDS, TEMPERATURES, TRIP_STATUSES } from "@/lib/labels";
+import { savePhoto } from "@/lib/photos";
 import { addDays, jstToDate, parseTime, todayJst } from "@/lib/time";
 import { GENERATE_DAYS, generateTrips } from "@/lib/trips/generate";
 import { resolveWeek } from "@/lib/week";
@@ -596,4 +597,135 @@ export async function decideBooking(_: ActionState, formData: FormData): Promise
   }
   refresh();
   return success(decision === "confirmed" ? "予約を確定しました。荷主のページに「予約確定」と表示されます。" : "お断りしました。荷主のページに理由が表示されます。");
+}
+
+// =====================================================================
+// 運行当日の記録（P3）
+// =====================================================================
+
+const OPS_MESSAGES: Record<string, string> = {
+  booking_not_found: "予約が見つかりません。ページを再読み込みしてください。",
+  trip_not_found: "便が見つかりません。ページを再読み込みしてください。",
+  bad_step: "今の状態からは、その操作はできません。ページを再読み込みしてください。",
+  not_all_loaded: "まだ積み込んでいない予約があります。積み込むか、積めない予約は「取り消す」にしてから出発してください。",
+  message_required: "内容（理由・受け取った方のお名前）を入力してください。",
+};
+
+function opsError(error: { code?: string; message: string }): ActionState {
+  const key = Object.keys(OPS_MESSAGES).find((k) => error.message.includes(k));
+  return failure(key ? OPS_MESSAGES[key] : explain(error));
+}
+
+/** 写真があれば保存する（予約ごと・便ごとのフォルダ） */
+async function photoFrom(formData: FormData, folder: string): Promise<{ path: string | null } | { error: string }> {
+  return savePhoto(formData.get("photo"), folder);
+}
+
+export async function loadBooking(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return failure(LOGIN_REQUIRED);
+  const parsed = parse(z.object({ id: uuid, message: optionalText(200) }), formData);
+  if (parsed.error !== undefined) return failure(parsed.error);
+  const carrier = await requireCarrier();
+  const photo = await photoFrom(formData, `${carrier.id}/${parsed.data.id}`);
+  if ("error" in photo) return failure(photo.error);
+  const { error } = await db().rpc("load_booking", {
+    p_company_id: carrier.id,
+    p_booking_id: parsed.data.id,
+    p_photo: photo.path,
+    p_message: parsed.data.message,
+  });
+  if (error) return opsError(error);
+  refresh();
+  return success("積込済みにしました。荷主のページに表示されます。");
+}
+
+export async function departTrip(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return failure(LOGIN_REQUIRED);
+  const parsed = parse(z.object({ id: uuid }), formData);
+  if (parsed.error !== undefined) return failure(parsed.error);
+  const carrier = await requireCarrier();
+  const { data, error } = await db().rpc("depart_trip", { p_company_id: carrier.id, p_trip_id: parsed.data.id });
+  if (error) return opsError(error);
+  refresh();
+  return success(data > 0 ? `出発しました。${data}件の荷物が「輸送中」になりました。` : "出発しました（運ぶ荷物はありませんでした）。");
+}
+
+export async function deliverBooking(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return failure(LOGIN_REQUIRED);
+  const parsed = parse(
+    z.object({ id: uuid, received_by: text("受け取った方のお名前", 50), message: optionalText(200) }),
+    formData,
+  );
+  if (parsed.error !== undefined) return failure(parsed.error);
+  const carrier = await requireCarrier();
+  const photo = await photoFrom(formData, `${carrier.id}/${parsed.data.id}`);
+  if ("error" in photo) return failure(photo.error);
+  const { data, error } = await db().rpc("deliver_booking", {
+    p_company_id: carrier.id,
+    p_booking_id: parsed.data.id,
+    p_received_by: parsed.data.received_by,
+    p_photo: photo.path,
+    p_message: parsed.data.message,
+  });
+  if (error) return opsError(error);
+  refresh();
+  return success(data === "trip_completed" ? "受け渡し済みにしました。すべての荷物を渡したので、この便は「到着」になりました。" : "受け渡し済みにしました。");
+}
+
+export async function cancelBookingByCarrier(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return failure(LOGIN_REQUIRED);
+  const parsed = parse(z.object({ id: uuid, message: text("取り消す理由", 200) }), formData);
+  if (parsed.error !== undefined) return failure(parsed.error);
+  const carrier = await requireCarrier();
+  const { error } = await db().rpc("cancel_booking_by_carrier", {
+    p_company_id: carrier.id,
+    p_booking_id: parsed.data.id,
+    p_message: parsed.data.message,
+  });
+  if (error) return opsError(error);
+  refresh();
+  return success("予約を取り消しました。荷主のページに理由が表示されます。");
+}
+
+export async function reportBooking(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return failure(LOGIN_REQUIRED);
+  const parsed = parse(
+    z.object({ id: uuid, kind: z.enum(["delay", "damage", "note"]), message: text("内容", 200) }),
+    formData,
+  );
+  if (parsed.error !== undefined) return failure(parsed.error);
+  const carrier = await requireCarrier();
+  const photo = await photoFrom(formData, `${carrier.id}/${parsed.data.id}`);
+  if ("error" in photo) return failure(photo.error);
+  const { error } = await db().rpc("report_booking", {
+    p_company_id: carrier.id,
+    p_booking_id: parsed.data.id,
+    p_kind: parsed.data.kind,
+    p_message: parsed.data.message,
+    p_photo: photo.path,
+  });
+  if (error) return opsError(error);
+  refresh();
+  return success(
+    parsed.data.kind === "damage"
+      ? "荷物の事故を記録しました。荷主のページに表示されます。OuRay の運営にも共有してください。"
+      : "記録しました。荷主のページに表示されます。",
+  );
+}
+
+export async function recordCleaning(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return failure(LOGIN_REQUIRED);
+  const parsed = parse(z.object({ id: uuid }), formData);
+  if (parsed.error !== undefined) return failure(parsed.error);
+  const carrier = await requireCarrier();
+  const photo = await photoFrom(formData, `${carrier.id}/trips/${parsed.data.id}`);
+  if ("error" in photo) return failure(photo.error);
+  const { error } = await db().rpc("record_cleaning", {
+    p_company_id: carrier.id,
+    p_trip_id: parsed.data.id,
+    p_photo: photo.path,
+  });
+  if (error) return opsError(error);
+  refresh();
+  return success("荷台の清掃を記録しました。");
 }

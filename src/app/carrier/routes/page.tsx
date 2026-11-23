@@ -7,10 +7,13 @@ import { DIRECTIONS } from "@/lib/labels";
 import { formatDuration, formatTime, weekdayLabel } from "@/lib/time";
 import { tripCode } from "@/lib/trips/board";
 import { MissingCarrier, NeedFleet } from "../notices";
+import { connection } from "next/server";
 
 /** 定期ルートの一覧。行き・帰りの組をまとめて表示する */
 export default async function RoutesPage() {
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const carrierId = currentCarrierId();
   const [carrier, routes, depots, vehicles] = await Promise.all([

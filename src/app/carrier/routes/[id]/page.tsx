@@ -18,11 +18,14 @@ import { formatTime, todayJst, weekdayLabel } from "@/lib/time";
 import { deleteRoute, saveRoute } from "../../actions";
 import { MissingCarrier, NeedFleet } from "../../notices";
 import { Field, SubHeading, TripFields } from "../../trip-fields";
+import { connection } from "next/server";
 
 /** 定期ルートの追加（/carrier/routes/new）・編集 */
 export default async function RoutePage({ params }: PageProps<"/carrier/routes/[id]">) {
   const { id } = await params;
   await requireAdminPage();
+  // 毎回その時点のデータで表示する（今日・現在時刻を使うため、作り置きしない）
+  await connection();
   if (!isDatabaseConfigured()) return <SetupNotice />;
   const carrierId = currentCarrierId();
 
