@@ -1,0 +1,19 @@
+<!-- A案「半分の荷台」：荷台の前半分は荷物（青）、後ろ半分は空き（斜線）。帰り便の空きを売るサービスそのもの -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" width="64" height="48">
+  <defs>
+    <pattern id="a-stripe" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#033b7d" stroke-width="1.6"/>
+    </pattern>
+  </defs>
+  <!-- 荷台：後ろ半分（空き） -->
+  <rect x="3" y="8" width="20" height="24" rx="3" fill="#fff" stroke="#033b7d" stroke-width="3"/>
+  <rect x="3" y="8" width="20" height="24" rx="3" fill="url(#a-stripe)"/>
+  <!-- 荷台：前半分（荷物） -->
+  <rect x="21" y="8" width="20" height="24" rx="3" fill="#0058aa" stroke="#033b7d" stroke-width="3"/>
+  <!-- 運転席 -->
+  <path d="M43 16h9l7 8v8H43z" fill="#033b7d" stroke="#033b7d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M47 19h4l4 5h-8z" fill="#fff"/>
+  <!-- 車輪 -->
+  <circle cx="13" cy="37" r="5" fill="#fff" stroke="#033b7d" stroke-width="3"/>
+  <circle cx="51" cy="37" r="5" fill="#fff" stroke="#033b7d" stroke-width="3"/>
+</svg>
