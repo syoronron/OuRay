@@ -58,7 +58,7 @@ export default async function TripsPage({ searchParams }: PageProps<"/carrier">)
 
         <WeekNav week={week} basePath="/carrier" />
 
-        <div className="grid grid-cols-3 border border-ink bg-white text-center">
+        <div className="grid grid-cols-3 rounded-2xl bg-white text-center">
           <Stat label="便" value={trips.filter((t) => t.status !== "cancelled").length} />
           <Stat label="公開中" value={published.length} />
           <Stat label="空き枠（公開中）" value={freeSlots} />
@@ -74,7 +74,7 @@ export default async function TripsPage({ searchParams }: PageProps<"/carrier">)
         </ActionForm>
 
         {trips.length === 0 ? (
-          <p className="border border-dashed border-mist bg-white p-6 text-center text-sm text-gray">
+          <p className="rounded-2xl bg-white p-6 text-center text-sm text-gray">
             この週の便はありません。
           </p>
         ) : (
@@ -82,10 +82,10 @@ export default async function TripsPage({ searchParams }: PageProps<"/carrier">)
             const dayTrips = trips.filter((t) => toJst(t.depart_at).date === day);
             if (dayTrips.length === 0) return null;
             return (
-              <section key={day}>
-                <h2 className="num mb-2 flex items-center gap-2 text-sm font-bold">
+              <section key={day} className="rounded-2xl bg-white p-3">
+                <h2 className="num mb-2 flex items-center gap-2 px-1 text-sm font-bold">
                   {formatDateShort(day)}
-                  {day === today && <span className="bg-ink px-1.5 text-[10px] text-white">今日</span>}
+                  {day === today && <span className="rounded-[4px] bg-primary px-1.5 text-[10px] text-white">今日</span>}
                 </h2>
                 <div className="grid gap-2">
                   {dayTrips.map((t) => {

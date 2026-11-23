@@ -85,8 +85,8 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
 
   return (
     <>
-      <p className="num text-[11px] font-semibold tracking-[0.2em] text-gray">{s.dir === "dep" ? "DEPARTURES" : "ARRIVALS"}</p>
-      <h1 className="mt-1 text-3xl font-bold tracking-tight">{s.dir === "dep" ? "出発便一覧" : "到着便一覧"}</h1>
+      <p className="num text-[11px] font-medium tracking-[0.2em] text-gray">{s.dir === "dep" ? "DEPARTURES" : "ARRIVALS"}</p>
+      <h1 className="mt-1 text-[30px] leading-tight font-normal md:text-[44px]">{s.dir === "dep" ? "出発便一覧" : "到着便一覧"}</h1>
       <p className="mt-2 text-sm leading-relaxed text-gray">
         トラックの帰り便などの空きを、パレット1枠から予約できます。日時と場所が決まった便なので、安く運べます。
       </p>
@@ -98,7 +98,7 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
             { href: hrefWith(s, { dir: "arr" }), label: "到着便", active: s.dir === "arr" },
           ]}
         />
-        <form method="get" role="search" className="flex border border-ink bg-white">
+        <form method="get" role="search" className="flex rounded-[10px] border border-mist bg-white focus-within:border-primary">
           {/* 検索しても、ほかの条件は保つ */}
           {s.dir === "arr" && <input type="hidden" name="dir" value="arr" />}
           {s.area && <input type="hidden" name="area" value={s.area} />}
@@ -110,27 +110,27 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
             defaultValue={s.q}
             placeholder="拠点・エリア・運送会社・便名"
             aria-label="拠点・エリア・運送会社・便名で探す"
-            className="min-h-12 min-w-0 flex-1 px-3 text-base outline-none"
+            className="min-h-13 min-w-0 flex-1 rounded-l-[10px] px-4 text-base outline-none"
           />
-          <button type="submit" aria-label="探す" className="flex w-12 items-center justify-center border-l border-line">
+          <button type="submit" aria-label="探す" className="flex w-12 items-center justify-center">
             <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden>
-              <circle cx="8.5" cy="8.5" r="6" fill="none" stroke="#141414" strokeWidth="1.8" />
-              <line x1="13" y1="13" x2="18" y2="18" stroke="#141414" strokeWidth="1.8" />
+              <circle cx="8.5" cy="8.5" r="6" fill="none" stroke="#033b7d" strokeWidth="1.8" />
+              <line x1="13" y1="13" x2="18" y2="18" stroke="#033b7d" strokeWidth="1.8" />
             </svg>
           </button>
         </form>
       </div>
 
-      <section className="mt-5 border border-ink bg-white p-3 md:p-5">
+      <section className="-mx-4 mt-6 rounded-t-2xl bg-white px-4 pt-6 pb-6 md:mx-0 md:rounded-2xl md:p-12">
         <AutoSubmitForm className="grid gap-3">
           {s.dir === "arr" && <input type="hidden" name="dir" value="arr" />}
           {s.q && <input type="hidden" name="q" value={s.q} />}
           <div className="grid gap-2 md:grid-cols-[auto_1fr] md:items-start">
-            <div className="grid grid-cols-2 border border-ink md:w-[26rem]">
-              <label className="flex items-center gap-2 border-r border-line px-3">
+            <div className="grid grid-cols-2 rounded-[10px] border border-mist md:w-[26rem]">
+              <label className="flex items-center gap-2 px-4">
                 <span className="sr-only">日付</span>
                 <CalendarIcon />
-                <select name="date" defaultValue={s.date} className="num min-h-11 w-full bg-transparent text-sm font-semibold outline-none">
+                <select name="date" defaultValue={s.date} className="num min-h-12 w-full bg-transparent text-sm text-navy outline-none">
                   {Array.from({ length: DAYS_AHEAD + 1 }, (_, i) => addDays(today, i)).map((d) => (
                     <option key={d} value={d}>
                       {formatDateShort(d)}
@@ -139,10 +139,10 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
                   ))}
                 </select>
               </label>
-              <label className="flex items-center gap-2 px-3">
+              <label className="flex items-center gap-2 border-l border-line px-4">
                 <span className="sr-only">時間帯</span>
                 <ClockIcon />
-                <select name="time" defaultValue={s.time} className="num min-h-11 w-full bg-transparent text-sm font-semibold outline-none">
+                <select name="time" defaultValue={s.time} className="num min-h-12 w-full bg-transparent text-sm text-navy outline-none">
                   {s.date === today && <option value="now">現在時刻</option>}
                   <option value="all">すべての時間帯</option>
                   {HOURS.map((h) => (
@@ -153,9 +153,9 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
                 </select>
               </label>
             </div>
-            <label className="flex min-h-11 items-center gap-2 border border-ink px-3">
+            <label className="flex min-h-12 items-center gap-2 rounded-[10px] border border-mist px-4">
               <span className="shrink-0 text-xs text-gray">{s.dir === "dep" ? "出発エリア" : "到着エリア"}</span>
-              <select name="area" defaultValue={s.area} className="min-h-11 w-full bg-transparent text-sm font-semibold outline-none">
+              <select name="area" defaultValue={s.area} className="min-h-12 w-full bg-transparent text-sm text-navy outline-none">
                 <option value="">すべて</option>
                 {board.areas.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -166,7 +166,7 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
             </label>
           </div>
           <details className="group" open={s.open || s.hygiene || s.detour}>
-            <summary className="ml-auto flex min-h-11 w-fit cursor-pointer list-none items-center gap-2 text-sm font-bold">
+            <summary className="ml-auto flex min-h-11 w-fit cursor-pointer list-none items-center gap-2 text-navy">
               <FilterIcon />
               絞り込み
               <span className="num text-gray transition-transform group-open:rotate-180" aria-hidden>
@@ -180,7 +180,7 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
             </div>
           </details>
           <noscript>
-            <button type="submit" className="min-h-11 w-full border border-ink font-bold">
+            <button type="submit" className="min-h-11 w-full rounded-[10px] border border-mist font-bold">
               この条件で表示する
             </button>
           </noscript>
@@ -190,7 +190,7 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
           {earlier > 0 && (
             <Link
               href={hrefWith(s, { time: "all" })}
-              className="flex min-h-10 items-center justify-center gap-2 bg-paper text-sm text-gray hover:text-ink"
+              className="flex min-h-9 items-center justify-center gap-2 rounded-[5px] bg-paper text-sm text-gray hover:text-ink"
             >
               <span className="num" aria-hidden>
                 ↑
@@ -200,7 +200,7 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
           )}
 
           {shown.length === 0 ? (
-            <p className="border border-dashed border-mist p-8 text-center text-sm text-gray">
+            <p className="rounded-[5px] bg-paper p-8 text-center text-sm text-gray">
               条件に合う便はありません。日付やエリアを変えてみてください。
             </p>
           ) : (
@@ -287,8 +287,8 @@ function filterTrips(board: Board, s: Search, now: Date): { shown: BoardTrip[]; 
 
 function Check({ name, checked, label }: { name: string; checked: boolean; label: string }) {
   return (
-    <label className="flex min-h-11 items-center gap-3 border border-line px-3 text-sm">
-      <input type="checkbox" name={name} value="1" defaultChecked={checked} className="size-5 accent-ink" />
+    <label className="flex min-h-11 items-center gap-3 rounded-[10px] border border-mist px-3 text-sm">
+      <input type="checkbox" name={name} value="1" defaultChecked={checked} className="size-5 accent-[#0058aa]" />
       {label}
     </label>
   );
@@ -297,10 +297,10 @@ function Check({ name, checked, label }: { name: string; checked: boolean; label
 function CalendarIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden className="shrink-0">
-      <rect x="2" y="4" width="16" height="14" fill="none" stroke="#141414" strokeWidth="1.5" />
-      <line x1="2" y1="8" x2="18" y2="8" stroke="#141414" strokeWidth="1.5" />
-      <line x1="6" y1="2" x2="6" y2="5" stroke="#141414" strokeWidth="1.5" />
-      <line x1="14" y1="2" x2="14" y2="5" stroke="#141414" strokeWidth="1.5" />
+      <rect x="2" y="4" width="16" height="14" fill="none" stroke="#033b7d" strokeWidth="1.5" />
+      <line x1="2" y1="8" x2="18" y2="8" stroke="#033b7d" strokeWidth="1.5" />
+      <line x1="6" y1="2" x2="6" y2="5" stroke="#033b7d" strokeWidth="1.5" />
+      <line x1="14" y1="2" x2="14" y2="5" stroke="#033b7d" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -308,8 +308,8 @@ function CalendarIcon() {
 function ClockIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden className="shrink-0">
-      <circle cx="10" cy="10" r="8" fill="none" stroke="#141414" strokeWidth="1.5" />
-      <polyline points="10,5 10,10 13.5,12" fill="none" stroke="#141414" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="8" fill="none" stroke="#033b7d" strokeWidth="1.5" />
+      <polyline points="10,5 10,10 13.5,12" fill="none" stroke="#033b7d" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -317,12 +317,12 @@ function ClockIcon() {
 function FilterIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden>
-      <line x1="2" y1="5" x2="18" y2="5" stroke="#141414" strokeWidth="1.5" />
-      <line x1="2" y1="10" x2="18" y2="10" stroke="#141414" strokeWidth="1.5" />
-      <line x1="2" y1="15" x2="18" y2="15" stroke="#141414" strokeWidth="1.5" />
-      <rect x="5" y="3" width="3" height="4" fill="#fff" stroke="#141414" strokeWidth="1.5" />
-      <rect x="12" y="8" width="3" height="4" fill="#fff" stroke="#141414" strokeWidth="1.5" />
-      <rect x="7" y="13" width="3" height="4" fill="#fff" stroke="#141414" strokeWidth="1.5" />
+      <line x1="2" y1="5" x2="18" y2="5" stroke="#033b7d" strokeWidth="1.5" />
+      <line x1="2" y1="10" x2="18" y2="10" stroke="#033b7d" strokeWidth="1.5" />
+      <line x1="2" y1="15" x2="18" y2="15" stroke="#033b7d" strokeWidth="1.5" />
+      <rect x="5" y="3" width="3" height="4" fill="#fff" stroke="#033b7d" strokeWidth="1.5" />
+      <rect x="12" y="8" width="3" height="4" fill="#fff" stroke="#033b7d" strokeWidth="1.5" />
+      <rect x="7" y="13" width="3" height="4" fill="#fff" stroke="#033b7d" strokeWidth="1.5" />
     </svg>
   );
 }

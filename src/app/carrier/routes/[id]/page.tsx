@@ -76,7 +76,7 @@ export default async function RoutePage({ params }: PageProps<"/carrier/routes/[
               <SubHeading>行き・帰り</SubHeading>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(DIRECTIONS).map(([value, label]) => (
-                  <label key={value} className="flex min-h-11 items-center gap-2 border border-ink bg-white px-3 text-sm has-checked:bg-ink has-checked:text-white">
+                  <label key={value} className="flex min-h-11 items-center gap-2 rounded-[10px] border border-mist bg-white px-3 text-sm has-checked:border-primary has-checked:bg-primary has-checked:text-white">
                     <input
                       type="radio"
                       name="direction"
@@ -106,7 +106,7 @@ export default async function RoutePage({ params }: PageProps<"/carrier/routes/[
                   {[1, 2, 3, 4, 5, 6, 0].map((wd) => (
                     <label
                       key={wd}
-                      className="flex min-h-11 items-center justify-center border border-ink bg-white text-sm font-bold has-checked:bg-ink has-checked:text-white"
+                      className="flex min-h-11 items-center justify-center rounded-[10px] border border-mist bg-white text-sm font-bold has-checked:border-primary has-checked:bg-primary has-checked:text-white"
                     >
                       <input
                         type="checkbox"

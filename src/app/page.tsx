@@ -16,7 +16,7 @@ function TripGraphic() {
         </p>
         <div className="mt-1 grid grid-cols-8 gap-1">
           {Array.from({ length: slots }, (_, i) => (
-            <span key={i} className="aspect-square border border-ink bg-ink" />
+            <span key={i} className="aspect-square rounded-[10px] bg-navy" />
           ))}
         </div>
       </div>
@@ -29,7 +29,7 @@ function TripGraphic() {
         </p>
         <div className="mt-1 grid grid-cols-8 gap-1">
           {Array.from({ length: slots }, (_, i) => (
-            <span key={i} className={`aspect-square border border-ink ${i < booked ? "bg-accent" : "stripe bg-white"}`} />
+            <span key={i} className={`aspect-square rounded-[4px] border ${i < booked ? "border-primary bg-primary" : "stripe border-mist bg-white"}`} />
           ))}
         </div>
       </div>
@@ -41,12 +41,12 @@ function TripGraphic() {
 export default function Home() {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col px-5 pt-4 pb-4">
-      <header className="flex items-center justify-between border-b border-ink pb-3">
+      <header className="flex items-center justify-between border-b border-line pb-3">
         <Logo size={22} />
         <span className="num text-[10px] font-semibold tracking-[0.2em] text-gray">RETURN-TRIP SHARING</span>
       </header>
 
-      <h1 className="mt-[4svh] text-[clamp(2rem,10vw,2.6rem)] leading-[1.18] font-bold tracking-tight">
+      <h1 className="mt-[4svh] text-[clamp(2rem,10vw,2.75rem)] leading-[1.25] font-normal">
         帰りのトラック、
         <br />
         空いています。
@@ -64,7 +64,7 @@ export default function Home() {
       <div className="mt-4 grid gap-2">
         <Link
           href="/trips"
-          className="flex min-h-13 items-center justify-between border border-ink bg-accent px-4 font-bold text-ink"
+          className="flex min-h-14 items-center justify-between rounded-[10px] bg-primary px-5 font-bold text-white"
         >
           <span>
             便をさがす
@@ -76,7 +76,7 @@ export default function Home() {
         </Link>
         <Link
           href="/carrier"
-          className="flex min-h-13 items-center justify-between border border-ink bg-ink px-4 font-bold text-white"
+          className="flex min-h-14 items-center justify-between rounded-[10px] border border-mist bg-white px-5 font-bold text-navy"
         >
           <span>
             空きを出す

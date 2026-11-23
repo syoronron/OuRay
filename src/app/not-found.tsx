@@ -4,7 +4,7 @@ import { Logo } from "@/components/logo";
 export default function NotFound() {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col px-5 pt-4 pb-8">
-      <header className="border-b border-ink pb-3">
+      <header className="border-b border-line pb-3">
         <Logo size={22} />
       </header>
       <p className="num mt-12 text-[11px] font-semibold tracking-[0.2em] text-gray">404</p>
@@ -12,7 +12,7 @@ export default function NotFound() {
       <p className="mt-2 text-sm leading-relaxed text-gray">
         URLが間違っているか、ページが削除された可能性があります。届いたURLをもう一度ご確認ください。
       </p>
-      <Link href="/" className="mt-8 flex min-h-12 items-center justify-center border border-ink bg-white text-sm font-bold">
+      <Link href="/" className="mt-8 flex min-h-12 items-center justify-center rounded-[10px] border border-mist bg-white text-sm font-bold">
         トップページへ
       </Link>
     </main>

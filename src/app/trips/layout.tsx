@@ -6,7 +6,7 @@ import { Logo } from "@/components/logo";
 export default function TripsLayout({ children }: LayoutProps<"/trips">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-10 border-b border-ink bg-paper/95 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-line bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <Link href="/" aria-label="トップページへ">
             <Logo size={22} />

@@ -2,17 +2,20 @@
 
 /*
  * OuRay デザイントークン
- * Zicci と同じ「紙とインク」の白黒を基本に、差し色（accent）は1画面に1か所まで。
- * accent は「空きを埋める＝予約する」ボタンや、選択中の便だけに使う。
+ * 空港のフライト情報ページを参考にした、明るく落ち着いた配色。
+ *   背景は青みのある薄いグレー、内容は白い角丸のパネル、一覧の行は薄いグレー。
+ *   決定ボタン・選択中は青（primary）、文字のリンク・ラベルは紺（navy）。
  */
 :root {
-  --paper: #f7f8f6;
+  --paper: #f6f8fb;
   --white: #ffffff;
-  --ink: #141414;
-  --gray: #6b6e6a;
-  --mist: #c6c9c4;
-  --line: #e1e3de;
-  --accent: #19c37d;
+  --ink: #081018;
+  --gray: #545a61;
+  --mist: #cbd2d9;
+  --line: #e4e8ed;
+  --primary: #0058aa;
+  --navy: #033b7d;
+  --warn: #b85400;
   --danger: #c2261d;
 }
 
@@ -23,10 +26,12 @@
   --color-gray: var(--gray);
   --color-mist: var(--mist);
   --color-line: var(--line);
-  --color-accent: var(--accent);
+  --color-primary: var(--primary);
+  --color-navy: var(--navy);
+  --color-warn: var(--warn);
   --color-danger: var(--danger);
   --font-sans: var(--font-jp), "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
-  --font-num: var(--font-latin), var(--font-jp), system-ui, sans-serif;
+  --font-num: var(--font-jp), "Hiragino Sans", system-ui, sans-serif;
 }
 
 body {
@@ -38,7 +43,7 @@ body {
 
 /* 斜線パターン：空き（まだ売れていない荷台） */
 @utility stripe {
-  background-image: repeating-linear-gradient(-45deg, var(--ink) 0 1px, transparent 1px 5px);
+  background-image: repeating-linear-gradient(-45deg, var(--mist) 0 1px, transparent 1px 5px);
 }
 @utility stripe-soft {
   background-image: repeating-linear-gradient(-45deg, var(--mist) 0 1px, transparent 1px 5px);
@@ -53,7 +58,7 @@ body {
 /* フォーム部品の共通スタイル（スマホで押しやすい高さ44px以上） */
 @layer components {
   .field {
-    @apply block w-full min-h-11 border border-ink bg-white px-3 text-base outline-none focus:ring-2 focus:ring-ink focus:ring-offset-1;
+    @apply block w-full min-h-12 rounded-[10px] border border-mist bg-white px-4 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20;
   }
   .label {
     @apply mb-1 block text-xs font-medium text-gray;

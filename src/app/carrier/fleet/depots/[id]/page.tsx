@@ -72,7 +72,7 @@ export default async function DepotPage({ params }: PageProps<"/carrier/fleet/de
               </Field>
             </div>
             <label className="flex min-h-11 items-center gap-3 border border-line bg-white px-3 text-sm">
-              <input type="checkbox" name="has_forklift" defaultChecked={depot?.has_forklift} className="size-5 accent-ink" />
+              <input type="checkbox" name="has_forklift" defaultChecked={depot?.has_forklift} className="size-5 accent-[#0058aa]" />
               フォークリフトがある
             </label>
             <Field label="荷主へのメモ（任意）" hint="搬入口の場所・駐車の注意など。予約した荷主に表示します。">

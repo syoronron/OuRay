@@ -6,14 +6,14 @@ import { formatTripTimes } from "@/lib/time";
 /** 便の状態のしるし */
 export function StatusChip({ status }: { status: Trip["status"] }) {
   const style = {
-    draft: "stripe-soft bg-white text-ink",
-    published: "bg-ink text-white",
-    closed: "bg-white text-ink",
-    departed: "bg-white text-gray",
-    completed: "bg-white text-gray",
-    cancelled: "bg-white text-danger border-danger",
+    draft: "border-dashed border-gray text-gray",
+    published: "border-navy text-navy",
+    closed: "border-ink text-ink",
+    departed: "border-mist text-gray",
+    completed: "border-mist text-gray",
+    cancelled: "border-danger text-danger",
   }[status];
-  return <span className={`border border-ink px-1.5 py-0.5 text-[11px] font-bold ${style}`}>{TRIP_STATUSES[status]}</span>;
+  return <span className={`rounded-[5px] border bg-white px-2 py-0.5 text-xs ${style}`}>{TRIP_STATUSES[status]}</span>;
 }
 
 /** パレット枠のマス：予約済み（差し色）・空き（斜線）。枠が多いときは縮める */
@@ -22,7 +22,7 @@ export function CapacityCells({ total, booked }: { total: number; booked: number
   return (
     <div className="flex gap-0.5" aria-hidden>
       {Array.from({ length: total }, (_, i) => (
-        <span key={i} className={`h-3 flex-1 border border-ink ${i < booked ? "bg-accent" : "stripe bg-white"}`} />
+        <span key={i} className={`h-3 flex-1 rounded-[2px] border ${i < booked ? "border-primary bg-primary" : "stripe border-mist bg-white"}`} />
       ))}
     </div>
   );
@@ -44,7 +44,7 @@ export function TripCard({
   return (
     <Link
       href={`/carrier/trips/${trip.id}`}
-      className={`block border border-ink bg-white p-3 ${trip.status === "cancelled" ? "opacity-60" : ""}`}
+      className={`block rounded-xl bg-white p-4 ${trip.status === "cancelled" ? "opacity-60" : ""}`}
     >
       <div className="flex items-center justify-between gap-2">
         <p className="num text-sm font-semibold">{formatTripTimes(trip.depart_at, trip.arrive_at)}</p>

@@ -39,15 +39,15 @@ export default async function BoardTripPage({ params }: PageProps<"/trips/[id]">
         ← 出発便一覧
       </Link>
 
-      <div className="border border-ink bg-white">
-        <div className="flex items-center justify-between gap-2 border-b border-ink px-4 py-3">
-          <p className="num text-xl font-bold">{tripCode(carrier.code, route?.number ?? null)}</p>
+      <div className="rounded-2xl bg-white">
+        <div className="flex items-center justify-between gap-2 border-b border-line px-5 py-4">
+          <p className="num text-xl font-bold text-navy">{tripCode(carrier.code, route?.number ?? null)}</p>
           <StatusBadge status={status} />
         </div>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2 px-4 py-4">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2 px-5 py-5">
           <div>
             <p className="text-xs text-gray">出発</p>
-            <p className="num text-3xl font-bold">{formatTime(dep.minutes)}</p>
+            <p className="num text-[34px] font-normal">{formatTime(dep.minutes)}</p>
             <p className="num text-xs text-gray">{formatDateShort(dep.date)}</p>
             <p className="mt-1 font-bold">{origin?.name}</p>
             <p className="text-xs text-gray">{origin && areaName.get(origin.area_id)}</p>
@@ -59,13 +59,13 @@ export default async function BoardTripPage({ params }: PageProps<"/trips/[id]">
           </p>
           <div className="text-right">
             <p className="text-xs text-gray">到着</p>
-            <p className="num text-3xl font-bold">{formatTime(arr.minutes)}</p>
+            <p className="num text-[34px] font-normal">{formatTime(arr.minutes)}</p>
             <p className="num text-xs text-gray">{formatDateShort(arr.date)}</p>
             <p className="mt-1 font-bold">{dest?.name}</p>
             <p className="text-xs text-gray">{dest && areaName.get(dest.area_id)}</p>
           </div>
         </div>
-        <div className="border-t border-line px-4 py-3 text-sm">
+        <div className="border-t border-line px-5 py-4 text-sm">
           <p>
             {carrier.name}
             {route && <span className="ml-2 text-xs text-gray">{DIRECTIONS[route.direction]}便</span>}
@@ -101,9 +101,9 @@ export default async function BoardTripPage({ params }: PageProps<"/trips/[id]">
               if (!c || c.is_waste) return null;
               return (
                 <li key={code} className="flex items-center gap-2">
-                  <span className="inline-block size-1.5 bg-ink" aria-hidden />
+                  <span className="inline-block size-1.5 rounded-full bg-navy" aria-hidden />
                   {c.name}
-                  {c.hygiene && <span className="border border-ink px-1.5 text-[10px] font-bold">衛生物</span>}
+                  {c.hygiene && <span className="rounded-[4px] border border-navy px-1.5 text-[10px] font-medium text-navy">衛生物</span>}
                 </li>
               );
             })}
@@ -135,7 +135,7 @@ export default async function BoardTripPage({ params }: PageProps<"/trips/[id]">
         <button
           type="button"
           disabled
-          className="min-h-13 w-full border border-ink bg-accent font-bold text-ink disabled:opacity-50"
+          className="min-h-14 w-full rounded-[10px] bg-primary font-bold text-white disabled:opacity-40"
         >
           {isBookable(status) ? "この便を予約する（準備中）" : `予約できません（${status.label}）`}
         </button>

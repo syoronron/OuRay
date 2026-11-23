@@ -19,8 +19,9 @@ function isActive(href: string, pathname: string): boolean {
 }
 
 function Icon({ name, active }: { name: (typeof tabs)[number]["icon"]; active: boolean }) {
-  const s = { stroke: "#141414", strokeWidth: 1.5 };
-  const fill = active ? "#141414" : "none";
+  const color = active ? "#0058aa" : "#545a61";
+  const s = { stroke: color, strokeWidth: 1.5 };
+  const fill = active ? color : "none";
   switch (name) {
     case "trips":
       // 便：荷台のパレット枠
@@ -38,7 +39,7 @@ function Icon({ name, active }: { name: (typeof tabs)[number]["icon"]; active: b
           <line x1="2" y1="6" x2="17" y2="6" {...s} />
           <polyline points="13,2.5 17,6 13,9.5" fill="none" {...s} />
           <line x1="3" y1="14" x2="18" y2="14" {...s} />
-          <polyline points="7,10.5 3,14 7,17.5" fill={active ? "#141414" : "none"} {...s} />
+          <polyline points="7,10.5 3,14 7,17.5" fill={fill} {...s} />
         </svg>
       );
     case "fleet":
@@ -60,7 +61,7 @@ function PendingBar() {
   return (
     <span
       aria-hidden
-      className={`absolute inset-x-3 top-0 h-0.5 bg-ink transition-opacity ${pending ? "animate-pulse opacity-100" : "opacity-0"}`}
+      className={`absolute inset-x-3 top-0 h-0.5 bg-primary transition-opacity ${pending ? "animate-pulse opacity-100" : "opacity-0"}`}
     />
   );
 }
@@ -68,7 +69,7 @@ function PendingBar() {
 export function CarrierNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-ink bg-white pb-[env(safe-area-inset-bottom)] print:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] print:hidden">
       <ul className="mx-auto grid max-w-md grid-cols-3">
         {tabs.map((tab) => {
           const active = isActive(tab.href, pathname);
@@ -78,7 +79,7 @@ export function CarrierNav() {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={`relative flex min-h-14 flex-col items-center justify-center gap-1 text-[10px] ${
-                  active ? "font-bold" : "text-gray"
+                  active ? "font-bold text-primary" : "text-gray"
                 }`}
               >
                 <PendingBar />

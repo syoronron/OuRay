@@ -44,21 +44,21 @@ export default async function RoutesPage() {
         <NeedFleet />
       ) : (
         <div className="grid gap-2">
-          <Link href="/carrier/routes/new" className="flex min-h-12 items-center justify-center border border-ink bg-ink font-bold text-white">
+          <Link href="/carrier/routes/new" className="flex min-h-12 items-center justify-center rounded-[10px] bg-navy font-bold text-white">
             定期ルートを追加する
           </Link>
           {ordered.length === 0 && (
-            <p className="border border-dashed border-mist bg-white p-6 text-center text-sm text-gray">まだ定期ルートがありません。</p>
+            <p className="rounded-2xl bg-white p-6 text-center text-sm text-gray">まだ定期ルートがありません。</p>
           )}
           {ordered.map((r) => (
-            <Link key={r.id} href={`/carrier/routes/${r.id}`} className="block border border-ink bg-white p-3">
+            <Link key={r.id} href={`/carrier/routes/${r.id}`} className="block rounded-xl bg-white p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-bold">
                   <span className="num mr-2 text-sm">{r.number !== null ? tripCode(carrier.code, r.number) : "—"}</span>
                   {depotName.get(r.origin_depot_id)} <span className="num text-gray">→</span> {depotName.get(r.dest_depot_id)}
                 </p>
                 <span
-                  className={`border border-ink px-1.5 py-0.5 text-[11px] font-bold ${r.direction === "return" ? "bg-accent" : "bg-white"}`}
+                  className={`rounded-[5px] border px-2 py-0.5 text-xs ${r.direction === "return" ? "border-primary bg-primary text-white" : "border-mist bg-white text-gray"}`}
                 >
                   {DIRECTIONS[r.direction]}
                 </span>

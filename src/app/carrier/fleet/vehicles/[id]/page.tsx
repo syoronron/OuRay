@@ -95,7 +95,7 @@ export default async function VehiclePage({ params }: PageProps<"/carrier/fleet/
               </Field>
             </div>
             <label className="flex min-h-11 items-center gap-3 border border-line bg-white px-3 text-sm">
-              <input type="checkbox" name="has_power_gate" defaultChecked={vehicle?.has_power_gate} className="size-5 accent-ink" />
+              <input type="checkbox" name="has_power_gate" defaultChecked={vehicle?.has_power_gate} className="size-5 accent-[#0058aa]" />
               パワーゲートがある
             </label>
             <SubmitButton variant="accent" pendingText="保存中…">

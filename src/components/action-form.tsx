@@ -76,10 +76,10 @@ export function ActionForm({
 }
 
 const variants = {
-  /** 差し色：1画面に1か所だけ使う決定ボタン */
-  accent: "bg-accent text-ink border border-ink",
-  ink: "bg-ink text-white border border-ink",
-  outline: "bg-white text-ink border border-ink",
+  /** 青：1画面に1か所だけ使う決定ボタン */
+  accent: "bg-primary text-white rounded-[10px] border border-primary",
+  ink: "bg-navy text-white rounded-[10px] border border-navy",
+  outline: "bg-white text-navy rounded-[10px] border border-mist",
   quiet: "bg-transparent text-gray underline underline-offset-4",
   danger: "bg-transparent text-danger underline underline-offset-4",
 } as const;
@@ -103,7 +103,7 @@ export function SubmitButton({
   disabled?: boolean;
 }) {
   const pending = useContext(PendingContext);
-  const size = variant === "quiet" || variant === "danger" ? "min-h-11 px-2 text-sm" : "min-h-12 px-4 font-bold";
+  const size = variant === "quiet" || variant === "danger" ? "min-h-11 px-2 text-sm" : "min-h-12 px-5 font-bold";
   return (
     <button
       type="submit"

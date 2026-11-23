@@ -6,7 +6,7 @@ import type { Week } from "@/lib/week";
 export function WeekNav({ week, basePath }: { week: Week; basePath: string }) {
   const prev = addDays(week.from, -7);
   const next = addDays(week.from, 7);
-  const linkClass = "flex size-11 items-center justify-center border border-ink bg-white num text-lg";
+  const linkClass = "flex size-11 items-center justify-center rounded-[10px] border border-mist bg-white num text-lg";
   return (
     <div className="flex items-center justify-between gap-2">
       <Link href={`${basePath}?week=${prev}`} className={linkClass} aria-label="前の週">

@@ -8,7 +8,7 @@ import { login } from "./actions";
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col px-5 pt-4 pb-8">
-      <header className="flex items-center justify-between border-b border-ink pb-3">
+      <header className="flex items-center justify-between border-b border-line pb-3">
         <Link href="/" aria-label="トップページへ">
           <Logo size={22} />
         </Link>
@@ -29,7 +29,7 @@ async function LoginForm({ searchParams }: { searchParams: PageProps<"/login">["
 
   if (status !== "ok") {
     return (
-      <div className="mt-6 border border-ink bg-white p-4 text-sm leading-relaxed">
+      <div className="mt-6 rounded-2xl bg-white p-5 text-sm leading-relaxed">
         <p className="font-bold">パスワードがまだ設定されていません</p>
         <p className="mt-1 text-gray">
           Vercel の Settings → Environment Variables に <span className="num font-semibold text-ink">ADMIN_PASSWORD</span>{" "}
@@ -41,7 +41,7 @@ async function LoginForm({ searchParams }: { searchParams: PageProps<"/login">["
   }
 
   return (
-    <ActionForm action={login} className="mt-6 border border-ink bg-white p-4">
+    <ActionForm action={login} className="mt-6 rounded-2xl bg-white p-5">
       <input type="hidden" name="next" value={typeof next === "string" ? next : "/carrier"} />
       <label className="label" htmlFor="password">
         パスワード

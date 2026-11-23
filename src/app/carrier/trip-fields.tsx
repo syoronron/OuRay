@@ -88,10 +88,10 @@ export function CategoryChecks({ categories, selected }: { categories: CargoCate
               value={c.code}
               defaultChecked={!c.is_waste && chosen.has(c.code)}
               disabled={c.is_waste}
-              className="size-5 accent-ink"
+              className="size-5 accent-[#0058aa]"
             />
             <span className="flex-1">{c.name}</span>
-            {c.hygiene && !c.is_waste && <span className="border border-ink px-1.5 text-[10px] font-bold">衛生物</span>}
+            {c.hygiene && !c.is_waste && <span className="rounded-[4px] border border-navy px-1.5 text-[10px] font-medium text-navy">衛生物</span>}
             {c.is_waste && <span className="text-[10px]">受付不可</span>}
           </label>
         ))}
@@ -203,7 +203,7 @@ export function TripFields({
           type="checkbox"
           name="requires_approval"
           defaultChecked={defaults.requires_approval ?? true}
-          className="size-5 accent-ink"
+          className="size-5 accent-[#0058aa]"
         />
         予約は承認してから確定する（おすすめ）
       </label>

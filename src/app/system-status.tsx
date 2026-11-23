@@ -71,7 +71,7 @@ export async function SystemStatus({ compact = false }: { compact?: boolean }) {
       body: status.kind === "error" ? status.message : "",
     },
     ok: {
-      dot: "bg-ink",
+      dot: "bg-primary",
       title: "データベース接続OK",
       body:
         status.kind === "ok" && status.carrierName
@@ -84,7 +84,7 @@ export async function SystemStatus({ compact = false }: { compact?: boolean }) {
   if (compact) {
     return (
       <div className="flex items-start gap-2 text-[11px] text-gray">
-        <span className={`mt-0.5 size-2.5 shrink-0 border border-ink ${view.dot}`} aria-hidden />
+        <span className={`mt-0.5 size-2.5 shrink-0 rounded-full border border-mist ${view.dot}`} aria-hidden />
         <p className="break-all">
           <span className="num font-semibold tracking-[0.12em]">SYSTEM</span>　{view.title}
           {status.kind !== "ok" && <span className="mt-0.5 block text-danger">{view.body}</span>}
@@ -94,8 +94,8 @@ export async function SystemStatus({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="flex gap-3 border border-ink bg-white p-4">
-      <span className={`mt-1 size-3 shrink-0 border border-ink ${view.dot}`} aria-hidden />
+    <div className="flex gap-3 rounded-2xl bg-white p-5">
+      <span className={`mt-1 size-3 shrink-0 rounded-full border border-mist ${view.dot}`} aria-hidden />
       <div>
         <p className="font-semibold">{view.title}</p>
         <p className="mt-0.5 break-all text-sm text-gray">{view.body}</p>

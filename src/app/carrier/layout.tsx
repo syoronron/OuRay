@@ -6,7 +6,7 @@ import { CarrierNav } from "./carrier-nav";
 export default function CarrierLayout({ children }: LayoutProps<"/carrier">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-10 border-b border-ink bg-paper/95 backdrop-blur print:hidden">
+      <header className="sticky top-0 z-10 border-b border-line bg-white/95 backdrop-blur print:hidden">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-4">
           <Link href="/carrier" aria-label="便の一覧へ">
             <Logo size={22} />
