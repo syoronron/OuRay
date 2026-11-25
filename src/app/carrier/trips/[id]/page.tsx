@@ -69,6 +69,12 @@ export default async function TripPage({ params }: PageProps<"/carrier/trips/[id
         </span>
       </PageHeader>
 
+      {trip.status === "draft" && (
+        <p className="mb-4 rounded-2xl border border-warn bg-white p-4 text-sm leading-relaxed">
+          <strong className="text-warn">この便は下書きです。</strong>
+          荷主の「便をさがす」（見積り）には表示されません。内容を確認して、下の「公開する」を押してください。
+        </p>
+      )}
       <div className="grid gap-4">
         <Section title="状態" aside={<StatusChip status={trip.status} />}>
           <dl className="grid grid-cols-[6.5rem_1fr] gap-y-1 text-sm">

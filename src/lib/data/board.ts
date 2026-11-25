@@ -141,3 +141,29 @@ export async function loadBoardTrip(id: string): Promise<(Omit<Board, "trips"> &
   if (!lookups.carriers.has(t.company_id)) return null;
   return { ...lookups, trip: t };
 }
+
+/**
+ * 指定の時刻より後で、荷主が予約できる（公開中・締切前の）いちばん近い便の出発日時。
+ * 一覧が空のときに「次の便がある日」を案内するため。審査の済んでいない運送会社の便は除く。
+ */
+export async function nextOpenDeparture(after: Date): Promise<string | null> {
+  const { data, error } = await db()
+    .from("trips")
+    .select("depart_at, company_id")
+    .eq("status", "published")
+    .gt("booking_cutoff_at", new Date().toISOString())
+    .gte("depart_at", after.toISOString())
+    .order("depart_at")
+    .limit(20);
+  if (error) fail("便", error);
+  if (!data || data.length === 0) return null;
+  const { data: carriers, error: e2 } = await db()
+    .from("companies")
+    .select("id")
+    .eq("is_carrier", true)
+    .eq("status", "approved")
+    .in("id", [...new Set(data.map((t) => t.company_id as string))]);
+  if (e2) fail("運送会社", e2);
+  const ok = new Set((carriers ?? []).map((c) => c.id as string));
+  return (data.find((t) => ok.has(t.company_id as string))?.depart_at as string | undefined) ?? null;
+}

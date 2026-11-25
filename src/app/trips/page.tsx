@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { BoardRow, Segmented } from "@/components/trip-board";
 import { SetupNotice } from "@/components/page-header";
-import { loadBoard, type Board, type BoardTrip } from "@/lib/data/board";
+import { loadBoard, nextOpenDeparture, type Board, type BoardTrip } from "@/lib/data/board";
 import { isDatabaseConfigured } from "@/lib/data/carrier";
 import { addDays, formatDateShort, formatTime, isDateString, jstToDate, todayJst, toJst } from "@/lib/time";
 import { boardStatus, tripCode } from "@/lib/trips/board";
@@ -76,6 +76,8 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
   const board = await loadBoard(jstToDate(addDays(s.date, s.dir === "arr" ? -3 : 0), 0), jstToDate(addDays(s.date, 1), 0));
   const now = new Date();
   const { shown, earlier } = filterTrips(board, s, now);
+  // 一覧が空のときは、予約できるいちばん近い便の日を案内する（日付を変えずに迷わないように）
+  const nextDeparture = shown.length === 0 ? await nextOpenDeparture(jstToDate(addDays(s.date, 1), 0)) : null;
   const hygieneCodes = new Set(board.categories.filter((c) => c.hygiene && !c.is_waste).map((c) => c.code));
   const areaName = new Map(board.areas.map((a) => [a.id, a.name]));
   const depotLabel = (id: string) => {
@@ -201,9 +203,29 @@ export default async function TripsBoardPage({ searchParams }: PageProps<"/trips
           )}
 
           {shown.length === 0 ? (
-            <p className="rounded-[5px] bg-paper p-8 text-center text-sm text-gray">
-              条件に合う便はありません。日付やエリアを変えてみてください。
-            </p>
+            <div className="rounded-[5px] bg-paper p-8 text-center text-sm text-gray">
+              <p>
+                {formatDateShort(s.date)}
+                {s.time === "now" ? "の、これから出発する" : "の"}便で、条件に合うものはありません。
+              </p>
+              {nextDeparture && (
+                <Link
+                  href={hrefWith(s, { date: toJst(nextDeparture).date, time: "all" })}
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-white px-4 font-bold text-navy"
+                >
+                  次の便がある日：{formatDateShort(toJst(nextDeparture).date)}
+                  <span aria-hidden>→</span>
+                </Link>
+              )}
+              {(s.area || s.open || s.hygiene || s.detour || s.q) && (
+                <Link
+                  href={hrefWith(s, { area: "", open: false, hygiene: false, detour: false, q: "" })}
+                  className="mt-2 block text-navy underline underline-offset-4"
+                >
+                  エリア・絞り込み・検索をはずす
+                </Link>
+              )}
+            </div>
           ) : (
             shown.map((t) => {
               const carrier = board.carriers.get(t.company_id)!;
